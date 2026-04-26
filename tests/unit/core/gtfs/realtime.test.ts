@@ -47,4 +47,80 @@ describe("fetchVehiclePositions", () => {
     expect(r.data[0]!.lat).toBeCloseTo(3.139);
     expect(r.data[0]!.timestamp.endsWith("+08:00")).toBe(true);
   });
+
+  it("skips entities missing position", async () => {
+    const FeedMessage = GtfsRealtimeBindings.transit_realtime.FeedMessage;
+    const msg = FeedMessage.create({
+      header: { gtfsRealtimeVersion: "2.0", incrementality: 0, timestamp: 1714521600 },
+      entity: [
+        { id: "v1", vehicle: { vehicle: { id: "X" }, timestamp: 1714521600 } }, // no position
+        {
+          id: "v2",
+          vehicle: {
+            vehicle: { id: "Y" },
+            position: { latitude: 3.0, longitude: 101.0 },
+            timestamp: 1714521600,
+          },
+        },
+      ],
+    });
+    const buf = FeedMessage.encode(msg).finish();
+    server.use(
+      http.get(URL_RT, () =>
+        new HttpResponse(buf, {
+          status: 200,
+          headers: { "content-type": "application/x-protobuf" },
+        }),
+      ),
+    );
+    const r = await fetchVehiclePositions(URL_RT);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.map((v) => v.vehicleId)).toEqual(["Y"]);
+  });
+
+  it("skips entities with empty vehicle id", async () => {
+    const FeedMessage = GtfsRealtimeBindings.transit_realtime.FeedMessage;
+    const msg = FeedMessage.create({
+      header: { gtfsRealtimeVersion: "2.0", incrementality: 0, timestamp: 1714521600 },
+      entity: [
+        {
+          id: "v1",
+          vehicle: {
+            vehicle: { id: "" }, // proto3 default
+            position: { latitude: 3.0, longitude: 101.0 },
+            timestamp: 1714521600,
+          },
+        },
+      ],
+    });
+    const buf = FeedMessage.encode(msg).finish();
+    server.use(
+      http.get(URL_RT, () =>
+        new HttpResponse(buf, {
+          status: 200,
+          headers: { "content-type": "application/x-protobuf" },
+        }),
+      ),
+    );
+    const r = await fetchVehiclePositions(URL_RT);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data).toEqual([]);
+  });
+
+  it("returns parse_error on malformed protobuf", async () => {
+    server.use(
+      http.get(URL_RT, () =>
+        new HttpResponse(new Uint8Array([0xff, 0xff, 0xff, 0xff]), {
+          status: 200,
+          headers: { "content-type": "application/x-protobuf" },
+        }),
+      ),
+    );
+    const r = await fetchVehiclePositions(URL_RT);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("parse_error");
+  });
 });

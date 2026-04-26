@@ -27,13 +27,18 @@ export const fetchVehiclePositions = async (
     const out: VehiclePosition[] = [];
     for (const e of feed.entity) {
       const v = e.vehicle;
-      if (!v?.position || v.vehicle?.id == null) continue;
+      if (!v?.position) continue;
+      const vehicleId = v.vehicle?.id;
+      if (!vehicleId) continue; // rejects null/undefined AND proto3 default ""
+      const lat = v.position.latitude;
+      const lon = v.position.longitude;
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
       out.push({
-        vehicleId: v.vehicle.id,
+        vehicleId,
         ...(v.trip?.tripId ? { tripId: v.trip.tripId } : {}),
         ...(v.trip?.routeId ? { routeId: v.trip.routeId } : {}),
-        lat: v.position.latitude ?? 0,
-        lon: v.position.longitude ?? 0,
+        lat,
+        lon,
         ...(v.position.bearing != null ? { bearing: v.position.bearing } : {}),
         ...(v.position.speed != null ? { speedKmh: v.position.speed } : {}),
         timestamp: epochToIsoMyt(Number(v.timestamp ?? feed.header?.timestamp ?? 0)),
