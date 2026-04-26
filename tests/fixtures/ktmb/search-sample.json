@@ -1,0 +1,12 @@
+{
+  "trains": [
+    {
+      "trainNo": "EG9322",
+      "from": "KUL",
+      "to": "BTW",
+      "departureDate": "2026-05-01",
+      "departureTime": "08:00",
+      "arrivalTime": "13:00"
+    }
+  ]
+}
