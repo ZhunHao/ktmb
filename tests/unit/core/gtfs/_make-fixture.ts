@@ -22,6 +22,7 @@ export const buildMiniFeed = (): Uint8Array => {
         "JBS,JB Sentral,1.4631,103.7708",
         "WCQ,Woodlands CIQ,1.4470,103.7710",
         "TPT,Tumpat,6.2014,102.1714",
+        "PKG,Port Klang,2.9990,101.3997",
       ].join("\n") + "\n",
     ),
     "calendar.txt": strToU8(
@@ -49,7 +50,7 @@ export const buildMiniFeed = (): Uint8Array => {
         "ST101,08:00:00,08:00:00,JBS,1",
         "ST101,08:05:00,08:05:00,WCQ,2",
         "K2412,07:30:00,07:30:00,KUL,1",
-        "K2412,08:30:00,08:30:00,BTW,2",
+        "K2412,08:30:00,08:30:00,PKG,2",
       ].join("\n") + "\n",
     ),
   };
