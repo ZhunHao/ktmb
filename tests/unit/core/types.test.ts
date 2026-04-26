@@ -83,4 +83,31 @@ describe("public schemas", () => {
     });
     expect(v.lat).toBeCloseTo(3.139);
   });
+
+  it("Iso8601MyT rejects calendar-invalid timestamps", () => {
+    // shape-valid but calendar-invalid
+    expect(
+      StopSchema.safeParse({
+        stationCode: "KUL",
+        arrival: null,
+        departure: "2026-13-45T25:99:99+08:00",
+      }).success,
+    ).toBe(false);
+    // Feb 30 should fail
+    expect(
+      StopSchema.safeParse({
+        stationCode: "KUL",
+        arrival: null,
+        departure: "2026-02-30T08:00:00+08:00",
+      }).success,
+    ).toBe(false);
+    // Valid timestamp still passes
+    expect(
+      StopSchema.safeParse({
+        stationCode: "KUL",
+        arrival: null,
+        departure: "2026-05-01T08:00:00+08:00",
+      }).success,
+    ).toBe(true);
+  });
 });
