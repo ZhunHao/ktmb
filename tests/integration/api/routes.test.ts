@@ -61,3 +61,26 @@ describe("REST routes", () => {
     expect(body.data[0]?.className).toBe("Premier");
   });
 });
+
+describe("Komuter + realtime routes", () => {
+  it("GET /v1/komuter/lines returns lines", async () => {
+    const res = await app.request("/v1/komuter/lines");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: Array<{ lineId: string }> };
+    expect(body.data.find((l) => l.lineId === "KOM-PK")).toBeDefined();
+  });
+
+  it("GET /v1/komuter/lines/:line/timetable returns departures", async () => {
+    const res = await app.request("/v1/komuter/lines/KOM-PK/timetable?station=KUL&date=2026-05-01");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: Array<{ trainNo: string }> };
+    expect(body.data.length).toBeGreaterThan(0);
+  });
+
+  it("GET /v1/realtime/vehicles returns the (empty) list", async () => {
+    const res = await app.request("/v1/realtime/vehicles");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: unknown[] };
+    expect(Array.isArray(body.data)).toBe(true);
+  });
+});
