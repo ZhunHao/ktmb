@@ -10,6 +10,23 @@ Tracked follow-ups for the next minor release. Each item links to a known gap
 that did not block v0.1.0 but will improve completeness, correctness, or
 ergonomics.
 
+### Fixed
+
+- **Route classification now matches the real `data.gov.my` GTFS feed.**
+  Added an end-to-end smoke check against the live feed which surfaced that
+  the original `classifyRoute` keyed off route_id prefixes (`ETS-*`, `KOM-*`)
+  that don't appear in real KTMB data. The classifier now uses GTFS
+  `route_type=0` as the primary Komuter signal (covering both Klang Valley
+  and Komuter Utara), `route_id="ETS"` plus the `"Electric Train Service"`
+  long-name substring for ETS, and `route_id="ST"` plus the literal
+  `"Shuttle Tebrau"` long-name substring for ShuttleTebrau. The synthetic
+  prefix-based fallbacks (`ETS-`, `KOM`, `STT`) are kept so existing fixtures
+  keep working. Verified against the actual nine routes the live feed
+  publishes: `KC05_KB18`, `KA15_KD19`, `100_47300`, `100_9000`, `SH`, `ERT`,
+  `ES`, `ST`, `ETS`. Critical edge case: `SH` (Intercity Shuttle Tumpat –
+  Gemas) is now correctly classified as `Intercity` rather than misread as
+  Shuttle Tebrau.
+
 ### Planned
 
 - **Capture real KTMB live booking endpoint and replace synthetic schema.**
