@@ -16,12 +16,16 @@ Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
   and a synthetic JSON schema. Calls via `ktmb.fares.get(...)`,
   `GET /v1/schedules/:trainNo/availability`, or the `get_fare_availability`
   MCP tool will return an `upstream_error` until the real endpoint is captured
-  (see `scripts/inspect-ktmb.md` for the manual procedure).
+  (see [`scripts/inspect-ktmb.md`](scripts/inspect-ktmb.md) for the manual procedure).
 - **GTFS Realtime trip updates and service alerts** are not yet published by
   `data.gov.my` (planned 2026). Only vehicle positions are available.
+- **`Station.lines`** is declared in the public schema but always returns
+  `undefined` in v0.1.0. Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased).
 
 Schedules, station search, Komuter timetables, and live vehicle positions
 work against `data.gov.my`'s GTFS feeds and are production-ready.
+
+For the full release notes and the v0.2 roadmap, see [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Install
 
@@ -88,6 +92,17 @@ Configure in Claude Desktop / Claude Code:
 - **Padang Besar**: KTMB ETS terminates at the Malaysia–Thailand border. Onward
   Thai SRT services are out of scope.
 
+## Roadmap
+
+Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased). Headline items for v0.2:
+
+- Capture the real KTMB live booking endpoint and replace the synthetic schema.
+- Surface GTFS-RT trip updates and service alerts once `data.gov.my` ships them.
+- Populate `Station.lines` from the route classifier.
+- Re-export `parseDateMyt` from the public surface.
+- File-backed cache for the parsed GTFS Static feed.
+- HTTP/SSE MCP transport for shared remote instances.
+
 ## License
 
-MIT.
+MIT. See [`LICENSE`](LICENSE) and [`CHANGELOG.md`](CHANGELOG.md) for release history.
