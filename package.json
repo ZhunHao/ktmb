@@ -24,7 +24,7 @@
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "tsup && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build": "tsup && tsc -p tsconfig.build.json",
     "lint": "tsgo --noEmit",
     "inspect:gtfs": "tsx scripts/inspect-gtfs.ts"
   },
