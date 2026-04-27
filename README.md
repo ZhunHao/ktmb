@@ -9,6 +9,20 @@ Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
 > conservative caching and an honest User-Agent. Do not deploy as a public
 > proxy without adding your own rate limiting.
 
+## Known limitations (v0.1.0)
+
+- **Fare and seat availability are not yet wired to real KTMB endpoints.** The
+  KTMB live booking client (`src/core/ktmb/client.ts`) uses a placeholder URL
+  and a synthetic JSON schema. Calls via `ktmb.fares.get(...)`,
+  `GET /v1/schedules/:trainNo/availability`, or the `get_fare_availability`
+  MCP tool will return an `upstream_error` until the real endpoint is captured
+  (see `scripts/inspect-ktmb.md` for the manual procedure).
+- **GTFS Realtime trip updates and service alerts** are not yet published by
+  `data.gov.my` (planned 2026). Only vehicle positions are available.
+
+Schedules, station search, Komuter timetables, and live vehicle positions
+work against `data.gov.my`'s GTFS feeds and are production-ready.
+
 ## Install
 
 ```bash

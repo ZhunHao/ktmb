@@ -4,7 +4,9 @@
   "description": "Read-only TypeScript library, REST API, and MCP server for KTMB rail data (GTFS + live booking site)",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +21,11 @@
     "ktmb-mcp": "./dist/bin/ktmb-mcp.js",
     "ktmb-api": "./dist/bin/ktmb-api.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
@@ -45,6 +51,7 @@
     "@hono/node-server": "^1.13.7",
     "@types/node": "^22.10.0",
     "@typescript/native-preview": "^7.0.0-dev.20260426.1",
+    "@vitest/coverage-v8": "^4.1.5",
     "msw": "^2.13.6",
     "tsup": "^8.5.1",
     "tsx": "^4.19.2",
