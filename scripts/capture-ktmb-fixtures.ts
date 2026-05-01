@@ -10,7 +10,11 @@ const FIXTURES = resolve(import.meta.dirname, "../tests/fixtures/ktmb");
 const REDACT = (s: string): string =>
   s
     .replace(/CfDJ8[\w\-+/=]+/g, "<RVT_REDACTED>")
-    .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, "<TOKEN_REDACTED>");
+    .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, "<TOKEN_REDACTED>")
+    // Strip orphan backslashes left when a base64 run was preceded by a JSON
+    // escape like + (regex stops at the backslash, captures u002B<rest>).
+    // Without this, "\<TOKEN_REDACTED>" produces an invalid JSON escape.
+    .replace(/\\(?=<TOKEN_REDACTED>)/g, "");
 
 const fetchKits = async (
   path: string,
