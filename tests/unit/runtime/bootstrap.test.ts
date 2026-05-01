@@ -103,3 +103,147 @@ describe("createKtmbRuntime", () => {
     ).rejects.toThrow(/GTFS load failed/);
   });
 });
+
+describe("createKtmbRuntime KTMB_COOKIE plumbing", () => {
+  it("threads process.env.KTMB_COOKIE into the fare getter so the Cookie header reaches KITS", async () => {
+    // Stub GTFS feed
+    server.use(
+      http.get(STATIC, () =>
+        new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        }),
+      ),
+      http.get(RT, () => new HttpResponse(new Uint8Array(), { status: 200 })),
+    );
+
+    // Capture the Cookie header that the KITS client sends to /Trip/LayoutV2.
+    let layoutV2Cookie: string | null = null;
+    const fixturePath = (name: string) =>
+      new URL(`../../fixtures/ktmb/${name}`, import.meta.url);
+    const { readFileSync } = await import("node:fs");
+    const fix = (name: string) =>
+      readFileSync(fixturePath(name), "utf8");
+
+    server.use(
+      http.get("https://online.ktmb.com.my/", () =>
+        HttpResponse.html(fix("home.html")),
+      ),
+      http.post("https://online.ktmb.com.my/Trip", () =>
+        HttpResponse.html(fix("trip-form.html")),
+      ),
+      http.post("https://online.ktmb.com.my/Trip/GetTripToken", () =>
+        HttpResponse.text(fix("trip-token.json"), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+      http.post("https://online.ktmb.com.my/Trip/Trip", () =>
+        HttpResponse.text(fix("trip-listing.json"), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+      http.post(
+        "https://online.ktmb.com.my/Trip/LayoutV2",
+        ({ request }) => {
+          layoutV2Cookie = request.headers.get("cookie");
+          return HttpResponse.text(fix("layout-v2.json"), {
+            headers: { "Content-Type": "application/json" },
+          });
+        },
+      ),
+    );
+
+    process.env.KTMB_COOKIE =
+      ".AspNetCore.Identity.Application=test-token-from-env";
+    try {
+      const rt = await createKtmbRuntime({
+        feedStaticUrl: STATIC,
+        feedRealtimeUrl: RT,
+        refreshIntervalMs: 0,
+      });
+      try {
+        const r = await rt.ktmb.fares.get({
+          from: "KUL",
+          to: "BTW",
+          date: "2026-05-16",
+          trainNo: "9124",
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        // Auth mode → multiple per-class fares with seatsLeftIncludesPriority=false
+        for (const c of r.data) {
+          expect(c.fare.seatsLeftIncludesPriority).toBe(false);
+        }
+        expect(layoutV2Cookie).toContain(
+          ".AspNetCore.Identity.Application=test-token-from-env",
+        );
+      } finally {
+        rt.shutdown();
+      }
+    } finally {
+      delete process.env.KTMB_COOKIE;
+    }
+  });
+
+  it("falls back to anonymous mode when KTMB_COOKIE is unset (no LayoutV2 hit)", async () => {
+    server.use(
+      http.get(STATIC, () =>
+        new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        }),
+      ),
+      http.get(RT, () => new HttpResponse(new Uint8Array(), { status: 200 })),
+    );
+
+    const { readFileSync } = await import("node:fs");
+    const fix = (name: string) =>
+      readFileSync(new URL(`../../fixtures/ktmb/${name}`, import.meta.url), "utf8");
+
+    let layoutCalls = 0;
+    server.use(
+      http.get("https://online.ktmb.com.my/", () =>
+        HttpResponse.html(fix("home.html")),
+      ),
+      http.post("https://online.ktmb.com.my/Trip", () =>
+        HttpResponse.html(fix("trip-form.html")),
+      ),
+      http.post("https://online.ktmb.com.my/Trip/GetTripToken", () =>
+        HttpResponse.text(fix("trip-token.json"), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+      http.post("https://online.ktmb.com.my/Trip/Trip", () =>
+        HttpResponse.text(fix("trip-listing.json"), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+      http.post("https://online.ktmb.com.my/Trip/LayoutV2", () => {
+        layoutCalls++;
+        return HttpResponse.text("{}", { status: 401 });
+      }),
+    );
+
+    delete process.env.KTMB_COOKIE;
+    const rt = await createKtmbRuntime({
+      feedStaticUrl: STATIC,
+      feedRealtimeUrl: RT,
+      refreshIntervalMs: 0,
+    });
+    try {
+      const r = await rt.ktmb.fares.get({
+        from: "KUL",
+        to: "BTW",
+        date: "2026-05-16",
+        trainNo: "9124",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.data.length).toBe(1);
+      expect(r.data[0]!.fare.seatsLeftIncludesPriority).toBe(true);
+      expect(layoutCalls).toBe(0); // anonymous mode never hits LayoutV2
+    } finally {
+      rt.shutdown();
+    }
+  });
+});

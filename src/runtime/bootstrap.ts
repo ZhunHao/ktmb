@@ -30,9 +30,15 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
       `GTFS load failed: ${initial.error.code} ${initial.error.message}`,
     );
   }
+  const cookieFromEnv =
+    typeof process !== "undefined" ? process.env.KTMB_COOKIE : undefined;
+  const fareGetter = cookieFromEnv
+    ? (input: Parameters<typeof ktmbGetAvailability>[0]) =>
+        ktmbGetAvailability(input, { cookie: cookieFromEnv })
+    : ktmbGetAvailability;
   const ktmb = createKtmb({
     store: initial.data,
-    fareGetter: ktmbGetAvailability,
+    fareGetter,
     realtimeFetcher: () => fetchVehiclePositions(opts.feedRealtimeUrl),
   });
   const swap = (ktmb as Ktmb & { swapStore: (s: GtfsStore) => void }).swapStore;
