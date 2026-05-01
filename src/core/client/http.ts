@@ -1,17 +1,12 @@
-import { Headers } from "undici";
-import type { RequestInit, Response as UndiciResponse } from "undici";
 import type { Result } from "../result.js";
 import { err, ok } from "../result.js";
 import { queueFor } from "./concurrency.js";
 
-// Node's `globalThis.fetch` is implemented via undici. We deliberately call
-// the global (rather than `import { fetch } from "undici"`) so msw's
-// FetchInterceptor — which patches `globalThis.fetch` — can intercept network
-// calls in tests. The userland undici fetch is a separate function reference
-// msw cannot patch.
-type GlobalFetch = (input: string, init?: RequestInit) => Promise<UndiciResponse>;
-const undiciFetch: GlobalFetch = (input, init) =>
-  (globalThis as unknown as { fetch: GlobalFetch }).fetch(input, init);
+// Use the runtime's global fetch / Headers / Response so this file works on
+// both Node (where they're undici-backed) and Deno (where they're WHATWG).
+// We deliberately call `globalThis.fetch` rather than importing from undici so
+// msw's FetchInterceptor — which patches `globalThis.fetch` — can intercept
+// network calls in tests.
 
 export type FetchOptions = {
   method?: "GET" | "POST";
@@ -40,7 +35,7 @@ export type ResponseLike = {
   arrayBuffer: () => Promise<ArrayBuffer>;
 };
 
-const toResponseLike = (res: UndiciResponse): ResponseLike => ({
+const toResponseLike = (res: Response): ResponseLike => ({
   status: res.status,
   json: () => res.json(),
   text: () => res.text(),
@@ -67,9 +62,9 @@ export const fetchWithRetry = async (
           method: options.method ?? "GET",
           headers,
         };
-        if (options.body !== undefined) init.body = options.body;
+        if (options.body !== undefined) init.body = options.body as BodyInit;
         if (options.signal !== undefined) init.signal = options.signal;
-        const res = await undiciFetch(url, init);
+        const res = await globalThis.fetch(url, init);
         if (res.ok) {
           return ok(toResponseLike(res));
         }

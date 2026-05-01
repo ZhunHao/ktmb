@@ -613,7 +613,75 @@
     }
   }
 
-  // Snapshot timestamp pill on the realtime tile
+  // ---- Live realtime polling ----
+  // The page boots from the static snapshot for instant first paint, but if
+  // we're hosted alongside the live REST API (Deno Deploy), poll
+  // /v1/realtime/vehicles every few seconds so the map stays current. On
+  // GitHub Pages the endpoint 404s and we silently keep the snapshot.
+  const LIVE_POLL_MS = 6_000;
+  let liveMode = false;
+
+  // Linear lat/lon → 800x480 viewBox projection. Same coefficients as the
+  // build-snapshot script so live and snapshot dots line up.
+  function projectLatLon(lat, lon) {
+    const latTop = 6.7;
+    const latBottom = 1.45;
+    const lonLeft = 100.0;
+    const lonRight = 104.0;
+    const x = ((lon - lonLeft) / (lonRight - lonLeft)) * 800;
+    const y = ((latTop - lat) / (latTop - latBottom)) * 480;
+    return {
+      x: Math.max(20, Math.min(780, x)),
+      y: Math.max(20, Math.min(460, y)),
+    };
+  }
+
+  function deriveKind(routeId) {
+    if (!routeId) return 'ets';
+    const id = String(routeId).toUpperCase();
+    if (id.includes('KOMUTER') || id.includes('KMTR') || /K\d/.test(id)) return 'komuter';
+    if (id.includes('SHUTTLE') || id.includes('TEBRAU')) return 'shuttle';
+    if (id.includes('INTERCITY') || id.includes('IC')) return 'intercity';
+    return 'ets';
+  }
+
+  async function pollLiveVehicles() {
+    try {
+      const res = await fetch('/v1/realtime/vehicles', { cache: 'no-store' });
+      if (!res.ok) throw new Error(String(res.status));
+      const body = await res.json();
+      if (!body.ok || !Array.isArray(body.data)) return;
+      VEHICLES = body.data.map((v) => {
+        const { x, y } = projectLatLon(v.lat, v.lon);
+        return { ...v, kind: deriveKind(v.routeId), x, y };
+      });
+      setText('#vehicle-count', String(VEHICLES.length));
+      renderVehicles();
+      if (!liveMode) {
+        liveMode = true;
+        markLiveModeActive(body);
+      }
+    } catch {
+      // Endpoint missing or unreachable → silently retain snapshot.
+    }
+  }
+
+  function markLiveModeActive(body) {
+    const counter = document.querySelector('.map-counter');
+    if (!counter) return;
+    counter.dataset.snapshotPill = 'set'; // suppress the snapshot tag
+    counter.replaceChildren();
+    const dot = el('span', 'live-dot');
+    counter.appendChild(dot);
+    const count = el('span', 'count');
+    count.id = 'vehicle-count';
+    count.textContent = String((body && body.data && body.data.length) || VEHICLES.length);
+    counter.appendChild(count);
+    counter.appendChild(document.createTextNode(' vehicles · live'));
+  }
+
+  // Snapshot timestamp pill on the realtime tile (only used when live polling
+  // never succeeds — i.e. on plain GitHub Pages).
   function renderSnapshotPill() {
     if (!META) return;
     const counter = document.querySelector('.map-counter');
@@ -733,10 +801,12 @@
       runKomuter();
     }
 
-    // Realtime
+    // Realtime — first paint from snapshot, then try live API.
     renderVehicles();
     renderSnapshotPill();
     setText('#vehicle-count', String(VEHICLES.length));
+    void pollLiveVehicles();
+    setInterval(pollLiveVehicles, LIVE_POLL_MS);
 
     // Code tabs
     wireCodeTabs();

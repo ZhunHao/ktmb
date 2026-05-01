@@ -2,7 +2,7 @@
 
 Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
 
-> **Live demo:** [zhunhao.github.io/ktmb](https://zhunhao.github.io/ktmb/) — interactive one-pager backed by real `data.gov.my` GTFS data, snapshotted daily at 03:00 MYT. See [Demo](#demo) for how the snapshot pipeline works.
+> **Live demo:** deployed to Deno Deploy² — both the live REST API at `/v1/*` and the static one-pager at `/` ship from the same origin. The realtime tile polls `/v1/realtime/vehicles` every 6 s for actually-live vehicle positions. See [Demo](#demo) for the deploy pipeline.
 
 > **Unofficial.** Not affiliated with Keretapi Tanah Melayu Berhad.
 > Schedules and station data come from Malaysia's Open Data Portal
@@ -121,29 +121,31 @@ Configure in Claude Desktop / Claude Code:
 
 ## Demo
 
-A static one-page demo lives under [`site/`](site/) and is deployed to
-GitHub Pages at <https://zhunhao.github.io/ktmb/>. It loads pre-computed
-JSON snapshots from `site/data/` rather than calling the API at runtime,
-so it works fully offline once loaded — and ships from a static origin
-with no backend.
+A one-page demo lives under [`site/`](site/) and is deployed to **Deno
+Deploy²** alongside a live REST API at `/v1/*`. The Deno entry
+([`bin/ktmb-deno.ts`](bin/ktmb-deno.ts)) bootstraps the same Hono app as
+`ktmb-api`, then mounts `serveStatic` for the demo on the same origin.
+The demo loads pre-computed JSON snapshots from `/data/*.json` for
+instant first paint, then polls `/v1/realtime/vehicles` every 6 s for
+actually-live vehicle positions.
 
-The snapshot pipeline:
+The deploy pipeline:
 
-1. [`scripts/build-snapshot.ts`](scripts/build-snapshot.ts) loads the
-   live GTFS-Static + GTFS-Realtime feeds via the library and writes
-   `site/data/{stations,komuter-lines,schedules,komuter,realtime,meta}.json`.
-2. [`.github/workflows/pages.yml`](.github/workflows/pages.yml) runs that
-   script on every push to `site/**`, on a daily 03:00 MYT cron, or on
-   manual dispatch — then publishes `site/` as a Pages artifact.
+1. [`deno.json`](deno.json) declares the install/build/runtime steps for
+   Deno Deploy. Build runs [`scripts/build-snapshot.ts`](scripts/build-snapshot.ts)
+   to bake `site/data/*.json` into the deployed artifact.
+2. Deno Deploy's GitHub source integration auto-builds and deploys on
+   every push to `main` — no GitHub Actions workflow needed.
 
-To regenerate locally:
+To preview locally:
 
 ```bash
-pnpm snapshot                   # writes site/data/*.json
-npx serve site                  # or any static server
+pnpm install
+pnpm snapshot                    # writes site/data/*.json
+deno task deploy:dev             # serves on http://localhost:8000
 ```
 
-`site/data/` is gitignored — CI is the source of truth.
+`site/data/` is gitignored — the deploy build re-creates it.
 
 ## Roadmap
 

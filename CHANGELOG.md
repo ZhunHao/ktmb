@@ -8,28 +8,42 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- **GitHub Pages demo at <https://zhunhao.github.io/ktmb/>.** A static
-  one-page interactive demo under `site/`, served from GitHub Pages.
-  Real GTFS data, not mocks: `scripts/build-snapshot.ts` runs the
-  library against the live `data.gov.my` feeds and writes
-  `site/data/*.json` (stations with lat/lon, Komuter lines + today's
-  timetables, schedule index between the busiest 25 hubs, and a
-  vehicle-position snapshot). `.github/workflows/pages.yml` runs the
-  snapshot on every push to `site/**`, on a daily 03:00 MYT cron, and
-  on manual dispatch, then deploys `site/` as a Pages artifact. The
-  demo's UI mirrors the Apple-inspired hand-off design (hero, station
-  search with autocomplete dropdown, schedules, dark Komuter tile,
-  realtime map with snapshot timestamp pill, code-tabs, REST endpoint
-  grid, footer). The snapshot-fetch step retries up to 3× to avoid
-  shipping a "0 vehicles" snapshot when GTFS-RT briefly returns empty.
-- **`pnpm snapshot` script** — `tsx scripts/build-snapshot.ts`, the
-  same generator CI uses, runnable locally.
+- **Deno Deploy² target** with a live REST API and static demo on one
+  origin. New entry `bin/ktmb-deno.ts` bootstraps the same Hono app as
+  `ktmb-api`, mounts `serveStatic` for `site/`, and is configured by
+  `deno.json` (install: `pnpm install --frozen-lockfile`, build:
+  `pnpm snapshot`, runtime: `bin/ktmb-deno.ts`). Deno Deploy's GitHub
+  source integration auto-builds on push.
+- **Live realtime polling on the demo.** After first paint from the
+  bundled snapshot, the realtime tile polls `/v1/realtime/vehicles`
+  every 6 s and replaces the dots with actually-live positions
+  (degrades gracefully on plain static hosting where the endpoint
+  404s).
+- **`api/server` is now a separate tsup entry**, producing
+  `dist/api/server.js` for direct import — used by `bin/ktmb-deno.ts`.
+- **`pnpm snapshot` script** — `tsx scripts/build-snapshot.ts`, runs
+  the library against `data.gov.my` GTFS feeds and writes
+  `site/data/*.json`. Used by the Deno Deploy build step.
+- **`scripts/build-snapshot.ts` retries `fetchVehiclePositions`** up to
+  3× when the feed returns empty, avoiding a stale "0 vehicles"
+  snapshot.
+
+### Removed
+
+- **`undici` dependency.** The library used it only for `Headers` and
+  type aliases; both are available as globals on modern Node and on
+  Deno. Dropping it makes the library Deno-compatible without
+  polyfills.
+- **GitHub Pages workflow** (`.github/workflows/pages.yml`). Replaced
+  by Deno Deploy.
 
 ### Changed
 
-- **Node engine bumped to `>=22.19`** to match `undici@8.1.0`'s
-  requirement (was `>=20`). CI matrix dropped Node 20.
+- **Node engine bumped to `>=22.19`** to match prior `undici@8.1.0`
+  requirement (was `>=20`); kept post-removal because tooling is
+  Node-22-only anyway. CI matrix dropped Node 20.
 - **Live smoke workflow runs on Node 22** (was 20).
+- **`tsup` target raised to `node22`** to match the engine.
 
 ### Planned
 

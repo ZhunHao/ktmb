@@ -1,0 +1,30 @@
+{
+  "nodeModulesDir": "auto",
+  "unstable": ["sloppy-imports"],
+  "compilerOptions": {
+    "lib": ["deno.ns", "deno.window", "dom", "dom.iterable", "esnext"]
+  },
+  "deploy": {
+    "include": [
+      "bin/ktmb-deno.ts",
+      "deno.json",
+      "package.json",
+      "pnpm-lock.yaml",
+      "tsconfig.json",
+      "tsconfig.build.json",
+      "tsup.config.ts",
+      "src/**",
+      "site/**",
+      "scripts/build-snapshot.ts"
+    ],
+    "install": "pnpm install --frozen-lockfile",
+    "build": "pnpm snapshot",
+    "runtime": {
+      "entrypoint": "bin/ktmb-deno.ts"
+    }
+  },
+  "tasks": {
+    "deploy:dev": "deno run -A --watch bin/ktmb-deno.ts",
+    "deploy:check": "deno check bin/ktmb-deno.ts"
+  }
+}

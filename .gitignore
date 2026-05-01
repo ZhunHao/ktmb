@@ -7,3 +7,5 @@ coverage
 .env.local
 tests/fixtures/captured
 site/data
+.deno/
+deno.lock
