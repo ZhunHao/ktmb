@@ -29,6 +29,30 @@ ergonomics.
 
 ### Planned
 
+- **Typed `feed_stale` / `outside_calendar_window` error when a requested
+  date is past the GTFS calendar `endDate`.** Today the live `data.gov.my`
+  feed publishes a fixed forward window that gets re-extended periodically
+  — when the calendar lapses (e.g. window ends today and the caller asks
+  for tomorrow), `SchedulesService.listSchedules`,
+  `GET /v1/schedules`, and the `list_schedules` MCP tool all return
+  `ok([])`. That makes "no trains today" indistinguishable from "feed is
+  stale". The fix: expose `store.calendarWindow: { startDate, endDate }`,
+  let services compare against it, and return a typed
+  `outside_calendar_window` error with the actual window in the message.
+  Verified against the live feed via
+  `npx tsx scripts/inspect-schedules.ts YYYY-MM-DD`.
+- **Periodic GTFS refresh in the bin processes.** `GtfsLoader.refresh()`
+  already exists but is never scheduled. Wire it into `ktmb-api` and
+  `ktmb-mcp` (cold-start refresh + every 6h) so a freshly published feed
+  is picked up without a process restart. Pairs with the concurrent-refresh
+  guard below.
+- **KTMB fallback for forward-dated schedule queries beyond the GTFS
+  window.** Once the real KTMB booking endpoint is captured (see next
+  item), extend `SchedulesService.listSchedules` to route `(from, to,
+  date)` queries to the KTMB live client when `date > calendarWindow.endDate`
+  and `date <= today + 30`. The existing `from + to + date` API contract
+  matches what the booking site requires, so no shape change is needed —
+  GTFS remains primary for in-window dates, KTMB is the typed fallback.
 - **Capture real KTMB live booking endpoint and replace synthetic schema.**
   Run the manual procedure in [`scripts/inspect-ktmb.md`](scripts/inspect-ktmb.md)
   to capture real network traffic from `online.ktmb.com.my`, then update

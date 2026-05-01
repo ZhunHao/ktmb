@@ -21,19 +21,48 @@ Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
   `data.gov.my` (planned 2026). Only vehicle positions are available.
 - **`Station.lines`** is declared in the public schema but always returns
   `undefined` in v0.1.0. Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased).
+- **Schedule queries past the GTFS calendar window return an empty list.** The
+  `data.gov.my` GTFS Static feed publishes a fixed calendar window (today: ends
+  `20260427`); requests for dates beyond `endDate` resolve to `ok([])` rather
+  than a typed error, so consumers can't tell "no trains" from "feed not yet
+  refreshed". v0.2 will return a typed `feed_stale` error and (once Task 11
+  lands) fall back to the KTMB booking site for forward-dated queries. To check
+  the window yourself, run
+  `npx tsx scripts/inspect-schedules.ts YYYY-MM-DD`.
 
 Schedules, station search, Komuter timetables, and live vehicle positions
-work against `data.gov.my`'s GTFS feeds and are production-ready.
+work against `data.gov.my`'s GTFS feeds (within the published calendar window)
+and are production-ready.
 
 For the full release notes and the v0.2 roadmap, see [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Install
 
+> **Not yet published to npm.** v0.1.0 is source-only — install from the repo
+> until the first registry release. Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased).
+
+```bash
+# from a clone of this repo
+npm install
+npm run build
+
+# run the bins directly
+node dist/bin/ktmb-mcp.js   # MCP stdio server
+node dist/bin/ktmb-api.js   # REST server on PORT (default 8787)
+
+# or expose `ktmb-mcp` / `ktmb-api` on your PATH
+npm link
+```
+
+To consume the library from another local project, run `npm link` here, then
+`npm link ktmb` in the consumer.
+
+Once published, the install path will be:
+
 ```bash
 npm i ktmb
-# or run directly
-npx ktmb-mcp     # MCP stdio server
-npx ktmb-api     # REST server on PORT (default 8787)
+npx ktmb-mcp
+npx ktmb-api
 ```
 
 ## Library
