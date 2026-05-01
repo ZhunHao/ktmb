@@ -47,6 +47,7 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
           opts.retryDelaysMs !== undefined ? { retryDelaysMs: opts.retryDelaysMs } : {},
         )
         .then((rr) => {
+          if (stopped) return;
           if (rr.ok) {
             swap(rr.data);
           } else {
@@ -54,10 +55,11 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
           }
         })
         .catch((e) => {
+          if (stopped) return;
           console.error("[ktmb] refresh threw:", e);
         })
         .finally(() => {
-          setImmediate(() => scheduleNext());
+          if (!stopped) setImmediate(() => scheduleNext());
         });
     }, interval);
     if (timer.unref) timer.unref();

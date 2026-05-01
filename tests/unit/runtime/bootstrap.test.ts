@@ -82,10 +82,13 @@ describe("createKtmbRuntime", () => {
       feedRealtimeUrl: RT,
       refreshIntervalMs: 60_000,
     });
-    rt.shutdown();
-    await vi.advanceTimersByTimeAsync(120_000);
-    expect(calls).toBe(1);
-    vi.useRealTimers();
+    try {
+      rt.shutdown();
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(calls).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("rejects when the cold-start load fails", async () => {
