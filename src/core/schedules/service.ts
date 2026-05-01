@@ -15,24 +15,25 @@ export type ListSchedulesInput = {
 };
 
 export class SchedulesService {
-  constructor(private readonly store: GtfsStore) {}
+  constructor(private readonly getStore: () => GtfsStore) {}
 
   listSchedules(input: ListSchedulesInput): Result<TrainSchedule[]> {
-    if (this.store.isOutsideCalendarWindow(input.date)) {
-      const w = this.store.calendarWindow!;
+    const store = this.getStore();
+    if (store.isOutsideCalendarWindow(input.date)) {
+      const w = store.calendarWindow!;
       return err(
         "outside_calendar_window",
         `requested date ${input.date} is outside GTFS calendar window ${w.startDate}..${w.endDate}`,
       );
     }
-    const trips = this.store.tripsRunningOn(input.date);
+    const trips = store.tripsRunningOn(input.date);
     const out: TrainSchedule[] = [];
     for (const trip of trips) {
-      const route = this.store.findRoute(trip.routeId);
+      const route = store.findRoute(trip.routeId);
       if (!route) continue;
       const service = classifyRoute(route);
       if (service === "Komuter") continue;
-      const stopTimes = this.store.stopTimesForTrip(trip.tripId);
+      const stopTimes = store.stopTimesForTrip(trip.tripId);
       const fromIdx = stopTimes.findIndex((s) => s.stopId === input.from);
       const toIdx = stopTimes.findIndex((s) => s.stopId === input.to);
       if (fromIdx < 0 || toIdx < 0 || fromIdx >= toIdx) continue;

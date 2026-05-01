@@ -4,7 +4,10 @@ import { GtfsStore } from "../../../../src/core/gtfs/store.js";
 import { KomuterService } from "../../../../src/core/komuter/service.js";
 import { buildMiniFeed } from "../gtfs/_make-fixture.js";
 
-const make = () => new KomuterService(new GtfsStore(parseStaticFeed(buildMiniFeed())));
+const make = () => {
+  const store = new GtfsStore(parseStaticFeed(buildMiniFeed()));
+  return new KomuterService(() => store);
+};
 
 describe("KomuterService", () => {
   it("listLines returns all Komuter routes", () => {

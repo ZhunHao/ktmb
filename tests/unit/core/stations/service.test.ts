@@ -4,7 +4,10 @@ import { GtfsStore } from "../../../../src/core/gtfs/store.js";
 import { StationsService } from "../../../../src/core/stations/service.js";
 import { buildMiniFeed } from "../gtfs/_make-fixture.js";
 
-const make = () => new StationsService(new GtfsStore(parseStaticFeed(buildMiniFeed())));
+const make = () => {
+  const store = new GtfsStore(parseStaticFeed(buildMiniFeed()));
+  return new StationsService(() => store);
+};
 
 describe("StationsService", () => {
   it("getByCode resolves a known station", () => {

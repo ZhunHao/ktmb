@@ -4,7 +4,10 @@ import { GtfsStore } from "../../../../src/core/gtfs/store.js";
 import { SchedulesService } from "../../../../src/core/schedules/service.js";
 import { buildMiniFeed } from "../gtfs/_make-fixture.js";
 
-const make = () => new SchedulesService(new GtfsStore(parseStaticFeed(buildMiniFeed())));
+const make = () => {
+  const store = new GtfsStore(parseStaticFeed(buildMiniFeed()));
+  return new SchedulesService(() => store);
+};
 
 describe("SchedulesService", () => {
   it("listSchedules returns ETS train KUL→BTW on a weekday", () => {

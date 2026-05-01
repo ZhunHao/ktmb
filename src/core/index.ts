@@ -16,6 +16,7 @@ export { GtfsLoader } from "./gtfs/loader.js";
 export { parseStaticFeed } from "./gtfs/static-parser.js";
 export { fetchVehiclePositions } from "./gtfs/realtime.js";
 export { getAvailability as ktmbGetAvailability } from "./ktmb/client.js";
+export { parseDateMyt } from "./time/parse-date.js";
 
 export type Ktmb = {
   stations: StationsService;
@@ -34,6 +35,8 @@ export type CreateKtmbOptions = {
 };
 
 export const createKtmb = (opts: CreateKtmbOptions): Ktmb => {
+  let store = opts.store;
+  const getStore = (): GtfsStore => store;
   const fareCache = new TtlCache<readonly TrainClass[]>({
     max: 256,
     ttlMs: opts.fareCacheTtlMs ?? 30_000,
@@ -42,11 +45,15 @@ export const createKtmb = (opts: CreateKtmbOptions): Ktmb => {
     max: 1,
     ttlMs: opts.realtimeCacheTtlMs ?? 15_000,
   });
-  return {
-    stations: new StationsService(opts.store),
-    schedules: new SchedulesService(opts.store),
+  const ktmb: Ktmb & { swapStore: (s: GtfsStore) => void } = {
+    stations: new StationsService(getStore),
+    schedules: new SchedulesService(getStore),
     fares: new FareAvailabilityService({ getter: opts.fareGetter, cache: fareCache }),
-    komuter: new KomuterService(opts.store),
+    komuter: new KomuterService(getStore),
     realtime: new RealtimeService({ fetcher: opts.realtimeFetcher, cache: realtimeCache }),
+    swapStore: (s) => {
+      store = s;
+    },
   };
+  return ktmb;
 };

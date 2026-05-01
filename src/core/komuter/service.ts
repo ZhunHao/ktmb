@@ -10,10 +10,10 @@ export type KomuterLine = { lineId: string; nameEn: string };
 export type GetTimetableInput = { line: string; station: string; date: string };
 
 export class KomuterService {
-  constructor(private readonly store: GtfsStore) {}
+  constructor(private readonly getStore: () => GtfsStore) {}
 
   listLines(): Result<KomuterLine[]> {
-    const out = this.store
+    const out = this.getStore()
       .listRoutes()
       .filter((r) => classifyRoute(r) === "Komuter")
       .map((r) => ({ lineId: r.routeId, nameEn: r.routeLongName || r.routeShortName }));
@@ -21,26 +21,27 @@ export class KomuterService {
   }
 
   getTimetable(input: GetTimetableInput): Result<KomuterDeparture[]> {
-    const route = this.store.findRoute(input.line);
+    const store = this.getStore();
+    const route = store.findRoute(input.line);
     if (!route || classifyRoute(route) !== "Komuter") {
       return err("not_found", `unknown Komuter line: ${input.line}`);
     }
-    if (!this.store.findStop(input.station)) {
+    if (!store.findStop(input.station)) {
       return err("not_found", `unknown station: ${input.station}`);
     }
-    if (this.store.isOutsideCalendarWindow(input.date)) {
-      const w = this.store.calendarWindow!;
+    if (store.isOutsideCalendarWindow(input.date)) {
+      const w = store.calendarWindow!;
       return err(
         "outside_calendar_window",
         `requested date ${input.date} is outside GTFS calendar window ${w.startDate}..${w.endDate}`,
       );
     }
-    const trips = this.store.tripsForRoute(route.routeId);
-    const tripsRunning = new Set(this.store.tripsRunningOn(input.date).map((t) => t.tripId));
+    const trips = store.tripsForRoute(route.routeId);
+    const tripsRunning = new Set(store.tripsRunningOn(input.date).map((t) => t.tripId));
     const out: KomuterDeparture[] = [];
     for (const trip of trips) {
       if (!tripsRunning.has(trip.tripId)) continue;
-      const stopTimes = this.store.stopTimesForTrip(trip.tripId);
+      const stopTimes = store.stopTimesForTrip(trip.tripId);
       const at = stopTimes.find((s) => s.stopId === input.station);
       if (!at) continue;
       out.push({
