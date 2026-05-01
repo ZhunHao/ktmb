@@ -8,10 +8,10 @@ export const buildMiniFeed = (): Uint8Array => {
     "routes.txt": strToU8(
       [
         "route_id,agency_id,route_short_name,route_long_name,route_type",
-        "ETS-N,KTMB,EG,ETS Northbound,2",
-        "KOM-PK,KTMB,KP,Komuter Port Klang,2",
-        "INT-EKW,KTMB,EW,Ekspres Rakyat Timuran,2",
-        "STT,KTMB,ST,Shuttle Tebrau,2",
+        "ETS,KTMB,EG,Electric Train Service Northbound,2",
+        "KC05_KB18,KTMB,KP,Komuter Port Klang Line,0",
+        "ERT,KTMB,EW,Ekspres Rakyat Timuran,2",
+        "ST,KTMB,ST,Shuttle Tebrau,2",
       ].join("\n") + "\n",
     ),
     "stops.txt": strToU8(
@@ -34,10 +34,10 @@ export const buildMiniFeed = (): Uint8Array => {
     "trips.txt": strToU8(
       [
         "route_id,service_id,trip_id,trip_headsign",
-        "ETS-N,WD,EG9322,Butterworth",
-        "INT-EKW,WD,EW27,Tumpat",
-        "STT,WD,ST101,Woodlands CIQ",
-        "KOM-PK,WD,K2412,Port Klang",
+        "ETS,WD,EG9322,Butterworth",
+        "ERT,WD,EW27,Tumpat",
+        "ST,WD,ST101,Woodlands CIQ",
+        "KC05_KB18,WD,K2412,Port Klang",
       ].join("\n") + "\n",
     ),
     "stop_times.txt": strToU8(

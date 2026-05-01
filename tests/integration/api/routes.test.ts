@@ -83,11 +83,11 @@ describe("Komuter + realtime routes", () => {
     const res = await app.request("/v1/komuter/lines");
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: Array<{ lineId: string }> };
-    expect(body.data.find((l) => l.lineId === "KOM-PK")).toBeDefined();
+    expect(body.data.find((l) => l.lineId === "KC05_KB18")).toBeDefined();
   });
 
   it("GET /v1/komuter/lines/:line/timetable returns departures", async () => {
-    const res = await app.request("/v1/komuter/lines/KOM-PK/timetable?station=KUL&date=2026-05-01");
+    const res = await app.request("/v1/komuter/lines/KC05_KB18/timetable?station=KUL&date=2026-05-01");
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: Array<{ trainNo: string }> };
     expect(body.data.length).toBeGreaterThan(0);

@@ -19,7 +19,7 @@ const buildFeed = (): Uint8Array => {
         id: "v1",
         vehicle: {
           vehicle: { id: "EG9322" },
-          trip: { tripId: "T1", routeId: "ETS-N" },
+          trip: { tripId: "T1", routeId: "ETS" },
           position: { latitude: 3.139, longitude: 101.6864, speed: 30, bearing: 0 },
           timestamp: 1714521600,
         },

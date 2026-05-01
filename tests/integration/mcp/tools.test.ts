@@ -54,12 +54,12 @@ describe("MCP tool handlers", () => {
   it("list_komuter_lines lists Komuter routes", async () => {
     const r = await listKomuterLinesHandler(ktmb)({});
     const body = text(r) as { data: Array<{ lineId: string }> };
-    expect(body.data.find((l) => l.lineId === "KOM-PK")).toBeDefined();
+    expect(body.data.find((l) => l.lineId === "KC05_KB18")).toBeDefined();
   });
 
   it("get_komuter_timetable returns departures", async () => {
     const r = await getKomuterTimetableHandler(ktmb)({
-      line: "KOM-PK",
+      line: "KC05_KB18",
       station: "KUL",
       date: "2026-05-01",
     });

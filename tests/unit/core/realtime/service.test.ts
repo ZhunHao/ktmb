@@ -20,15 +20,15 @@ describe("RealtimeService", () => {
   it("filters by routeId", async () => {
     const fetchFn = vi.fn().mockResolvedValue(
       ok([
-        { vehicleId: "v1", routeId: "ETS-N", lat: 3, lon: 101, timestamp: "2026-05-01T08:00:00+08:00" },
-        { vehicleId: "v2", routeId: "KOM-PK", lat: 3, lon: 101, timestamp: "2026-05-01T08:00:00+08:00" },
+        { vehicleId: "v1", routeId: "ETS", lat: 3, lon: 101, timestamp: "2026-05-01T08:00:00+08:00" },
+        { vehicleId: "v2", routeId: "KC05_KB18", lat: 3, lon: 101, timestamp: "2026-05-01T08:00:00+08:00" },
       ]),
     );
     const svc = new RealtimeService({
       fetcher: fetchFn,
       cache: new TtlCache({ max: 1, ttlMs: 60_000 }),
     });
-    const r = await svc.getPositions({ routeId: "KOM-PK" });
+    const r = await svc.getPositions({ routeId: "KC05_KB18" });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.data.map((v) => v.vehicleId)).toEqual(["v2"]);
