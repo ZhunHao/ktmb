@@ -44,6 +44,28 @@ booking-side surfaces are unchanged.
   before exit (5 s hard deadline on `ktmb-api`).
 - **`parseDateMyt` re-exported** from the public surface so library
   consumers can validate dates the same way the built-in REST/MCP layers do.
+- **`Station.lines` populated** by `StationsService` from `classifyRoute`
+  applied over each route's trips and stop_times. Each station now carries
+  the deterministic-sorted set of services it sees (`ETS`, `Intercity`,
+  `Komuter`, `ShuttleTebrau`). The field stays optional on the public
+  `Station` Zod schema; stations not visited by any classified route omit
+  the key entirely.
+- **MCP `buildMcpServer` registration tests.** `src/mcp/server.ts`
+  coverage rose from 0 % to 83 % via two new integration tests asserting
+  all six tools are registered with non-empty descriptions.
+- **Logger seam.** `src/runtime/logger.ts` exposes `createLogger` with a
+  swappable transport. `bootstrap.ts` (refresh logging) and `api/errors.ts`
+  (unhandled-error logging) route through it. Default transport stays
+  `console` for backwards compatibility; deployments can pipe to
+  pino/winston without forking.
+- **CI improvements.** `concurrency: cancel-in-progress` on the main
+  workflow; Node 22 added to the matrix alongside Node 20; nightly
+  `KTMB_SMOKE=1` workflow runs `tests/smoke/gtfs.test.ts` against the
+  live `data.gov.my` feeds; the main workflow now smoke-imports the
+  built `dist/bin/ktmb-{api,mcp}.js` to catch broken exports.
+- **Repository hygiene.** Added `CONTRIBUTING.md`, `SECURITY.md`,
+  `.nvmrc`, and a Dependabot configuration grouping patch / minor
+  npm bumps weekly.
 
 ### Changed
 
@@ -58,6 +80,17 @@ booking-side surfaces are unchanged.
 
 ### Removed
 
+- **`KomuterDeparture.platform` field removed (BREAKING).** The field was
+  declared `optional` in v0.1.0 but was never populated by the parser or
+  by any service. It has been removed from `KomuterDepartureSchema` and
+  the `KomuterDeparture` TypeScript type. Any consumer reading
+  `departure.platform` will see `undefined` at runtime after upgrade and
+  a type error if on strict TypeScript.
+- **Synthetic prefix-based fallbacks (`ETS-`, `KOM`, `STT`, `INT-`)
+  dropped from `classifyRoute`.** Test fixtures now use real `data.gov.my`
+  GTFS shapes (`route_id="ETS"`, `route_id="ST"`, `route_type=0` for
+  Komuter, etc.); the classifier no longer carries fallbacks for the
+  v0.1.0 synthetic-fixture-only IDs.
 - **Stale `feed_stale` planned-error language in the README.** The shipped
   surface is `outside_calendar_window` mapped to HTTP 422.
 
@@ -71,8 +104,8 @@ booking-side surfaces are unchanged.
   and Komuter Utara), `route_id="ETS"` plus the `"Electric Train Service"`
   long-name substring for ETS, and `route_id="ST"` plus the literal
   `"Shuttle Tebrau"` long-name substring for ShuttleTebrau. The synthetic
-  prefix-based fallbacks (`ETS-`, `KOM`, `STT`) are kept so existing fixtures
-  keep working. Verified against the actual nine routes the live feed
+  prefix-based fallbacks have been removed; all test fixtures now use
+  real-feed route shapes. Verified against the actual nine routes the live feed
   publishes: `KC05_KB18`, `KA15_KD19`, `100_47300`, `100_9000`, `SH`, `ERT`,
   `ES`, `ST`, `ETS`. Critical edge case: `SH` (Intercity Shuttle Tumpat –
   Gemas) is now correctly classified as `Intercity` rather than misread as
@@ -97,16 +130,6 @@ booking-side surfaces are unchanged.
 - **Surface GTFS Realtime trip updates and service alerts** when
   `data.gov.my` publishes them (planned 2026 per the portal docs). The
   GTFS adapter's shape already accommodates them.
-- **Populate `Station.lines`.** The public `Station` type declares
-  optional `lines: ("ETS"|"Intercity"|"Komuter"|"ShuttleTebrau")[]`, but
-  `StationsService` does not derive it today. The data is available via
-  the route classifier + `tripsForRoute` + `stopTimesForTrip`.
-- **MCP server start/dispatch tests.** `src/mcp/server.ts` is at 0% line
-  coverage today; tool handlers are covered via direct invocation, but
-  the `buildMcpServer` registration and `runStdio` wiring are not.
-- **Nightly CI smoke job** that exports `KTMB_SMOKE=1` and runs
-  `tests/smoke/gtfs.test.ts` against the real `data.gov.my` feeds.
-  Today the smoke tests are skipped on every CI run.
 - **File-backed cache for the parsed GTFS Static feed** to reduce
   cold-start time across bin restarts. Currently the loader re-downloads
   on every process start.
