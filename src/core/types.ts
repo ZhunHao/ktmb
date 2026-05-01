@@ -50,6 +50,13 @@ export const FareSchema = z.object({
   priceMinor: z.number().int().nonnegative(),
   currency: z.enum(["MYR", "SGD"]),
   seatsLeft: z.number().int().nonnegative().nullable(),
+  /**
+   * True when seatsLeft was derived from the public KITS listing (which counts
+   * OKU/priority seats in the total). False when derived from /Trip/LayoutV2
+   * (authenticated mode), where OKU seats are excluded. Optional for backward
+   * compatibility with cached/persisted fixtures that pre-date this field.
+   */
+  seatsLeftIncludesPriority: z.boolean().optional(),
 });
 export type Fare = z.infer<typeof FareSchema>;
 

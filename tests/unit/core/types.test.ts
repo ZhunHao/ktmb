@@ -111,3 +111,37 @@ describe("public schemas", () => {
     ).toBe(true);
   });
 });
+
+describe("FareSchema seatsLeftIncludesPriority", () => {
+  it("accepts a fare with seatsLeftIncludesPriority=true", () => {
+    const r = FareSchema.safeParse({
+      className: "Standard",
+      priceMinor: 11200,
+      currency: "MYR",
+      seatsLeft: 230,
+      seatsLeftIncludesPriority: true,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("accepts a fare without the field (legacy fixtures)", () => {
+    const r = FareSchema.safeParse({
+      className: "Standard",
+      priceMinor: 11200,
+      currency: "MYR",
+      seatsLeft: null,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects non-boolean seatsLeftIncludesPriority", () => {
+    const r = FareSchema.safeParse({
+      className: "Standard",
+      priceMinor: 11200,
+      currency: "MYR",
+      seatsLeft: 0,
+      seatsLeftIncludesPriority: "yes",
+    });
+    expect(r.success).toBe(false);
+  });
+});
