@@ -31,4 +31,13 @@ describe("createKtmb facade", () => {
     const rt = await ktmb.realtime.getPositions();
     expect(rt.ok).toBe(true);
   });
+
+  it("re-exports parseDateMyt from the public surface", async () => {
+    const mod = await import("../../../src/core/index.js");
+    expect(typeof mod.parseDateMyt).toBe("function");
+    const r = mod.parseDateMyt("2026-05-01", new Date("2026-05-01T00:00:00Z"));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data).toBe("2026-05-01");
+  });
 });
