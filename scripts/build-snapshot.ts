@@ -228,10 +228,22 @@ const main = async (): Promise<void> => {
   log("wrote", scheduleEntryCount, "schedule entries across", dates.length, "dates");
 
   // ---- Realtime snapshot ----
+  // KTMB's GTFS-RT feed sometimes returns an empty vehicle list for a few
+  // seconds at a time. Retry briefly (bypassing RealtimeService's TtlCache by
+  // hitting fetchVehiclePositions directly) so we don't ship "0 vehicles" for
+  // 24h just because we caught an empty window.
   let realtimeCount = 0;
   let realtimeCapturedAt: string | null = null;
   try {
-    const rt = await ktmb.realtime.getPositions();
+    const RT_ATTEMPTS = 3;
+    const RT_DELAY_MS = 4_000;
+    let rt = await fetchVehiclePositions(FEED_RT);
+    for (let attempt = 1; attempt < RT_ATTEMPTS; attempt++) {
+      if (rt.ok && rt.data.length > 0) break;
+      log(`realtime attempt ${attempt} returned ${rt.ok ? rt.data.length : "error"}; retrying in ${RT_DELAY_MS}ms`);
+      await new Promise((r) => setTimeout(r, RT_DELAY_MS));
+      rt = await fetchVehiclePositions(FEED_RT);
+    }
     if (rt.ok) {
       const enriched: EnrichedVehicle[] = rt.data.map((v: VehiclePosition) => {
         const route = v.routeId ? store.findRoute(v.routeId) : undefined;
