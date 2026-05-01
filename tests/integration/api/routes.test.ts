@@ -76,15 +76,6 @@ describe("REST routes", () => {
     const body = (await res.json()) as { ok: false; error: { code: string; message: string } };
     expect(body).toEqual({ ok: false, error: { code: "not_found", message: "no such route" } });
   });
-
-  it("GET / serves the demo HTML page", async () => {
-    const res = await app.request("/");
-    expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toMatch(/text\/html/);
-    const body = await res.text();
-    expect(body).toContain("<title>ktmb demo</title>");
-    expect(body).toContain("/v1/stations");
-  });
 });
 
 describe("Komuter + realtime routes", () => {

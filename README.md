@@ -2,6 +2,8 @@
 
 Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
 
+> **Live demo:** [zhunhao.github.io/ktmb](https://zhunhao.github.io/ktmb/) — interactive one-pager showcasing station search, schedules, Komuter timetables, and a live vehicle map. Mock-only; no live KTMB calls.
+
 > **Unofficial.** Not affiliated with Keretapi Tanah Melayu Berhad.
 > Schedules and station data come from Malaysia's Open Data Portal
 > (`data.gov.my`) GTFS feeds. Fares and seat availability come from the

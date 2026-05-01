@@ -1,0 +1,44 @@
+name: Deploy demo to GitHub Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "scripts/build-snapshot.ts"
+      - "src/**"
+      - ".github/workflows/pages.yml"
+  schedule:
+    # 03:00 MYT = 19:00 UTC. Refreshes the GTFS snapshot daily.
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build snapshot from live GTFS feeds
+        run: pnpm snapshot
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

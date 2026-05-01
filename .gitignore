@@ -6,3 +6,4 @@ coverage
 .env
 .env.local
 tests/fixtures/captured
+site/data

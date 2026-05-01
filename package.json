@@ -32,7 +32,8 @@
     "test:watch": "vitest",
     "build": "tsup && tsc -p tsconfig.build.json",
     "lint": "tsgo --noEmit",
-    "inspect:gtfs": "tsx scripts/inspect-gtfs.ts"
+    "inspect:gtfs": "tsx scripts/inspect-gtfs.ts",
+    "snapshot": "tsx scripts/build-snapshot.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
