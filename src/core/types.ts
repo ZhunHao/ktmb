@@ -75,7 +75,6 @@ export const KomuterDepartureSchema = z.object({
   trainNo: z.string().min(1),
   line: z.string().min(1),
   departure: Iso8601MyT,
-  platform: z.string().optional(),
 });
 export type KomuterDeparture = z.infer<typeof KomuterDepartureSchema>;
 

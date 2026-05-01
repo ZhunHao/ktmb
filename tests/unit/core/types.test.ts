@@ -71,7 +71,7 @@ describe("public schemas", () => {
       line: "Port Klang",
       departure: "2026-05-01T08:30:00+08:00",
     });
-    expect(k.platform).toBeUndefined();
+    expect(k.trainNo).toBe("K2412");
   });
 
   it("VehiclePosition parses lat/lon", () => {
