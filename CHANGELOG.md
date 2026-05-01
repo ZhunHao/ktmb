@@ -6,9 +6,34 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **GitHub Pages demo at <https://zhunhao.github.io/ktmb/>.** A static
+  one-page interactive demo under `site/`, served from GitHub Pages.
+  Real GTFS data, not mocks: `scripts/build-snapshot.ts` runs the
+  library against the live `data.gov.my` feeds and writes
+  `site/data/*.json` (stations with lat/lon, Komuter lines + today's
+  timetables, schedule index between the busiest 25 hubs, and a
+  vehicle-position snapshot). `.github/workflows/pages.yml` runs the
+  snapshot on every push to `site/**`, on a daily 03:00 MYT cron, and
+  on manual dispatch, then deploys `site/` as a Pages artifact. The
+  demo's UI mirrors the Apple-inspired hand-off design (hero, station
+  search with autocomplete dropdown, schedules, dark Komuter tile,
+  realtime map with snapshot timestamp pill, code-tabs, REST endpoint
+  grid, footer). The snapshot-fetch step retries up to 3× to avoid
+  shipping a "0 vehicles" snapshot when GTFS-RT briefly returns empty.
+- **`pnpm snapshot` script** — `tsx scripts/build-snapshot.ts`, the
+  same generator CI uses, runnable locally.
+
+### Changed
+
+- **Node engine bumped to `>=22.19`** to match `undici@8.1.0`'s
+  requirement (was `>=20`). CI matrix dropped Node 20.
+- **Live smoke workflow runs on Node 22** (was 20).
+
 ### Planned
 
-- _(empty — file new entries here as Phase C/D land further work)_
+- _(empty — file new entries here as further work lands)_
 
 ## [0.2.0] - 2026-05-01
 

@@ -15,7 +15,8 @@ pnpm test
 pnpm build
 ```
 
-Use Node 20 (see `.nvmrc`).
+Use Node 22 (see `.nvmrc`). Lower versions fail at install time —
+`undici@8.1.0` declares `engines.node >=22.19`.
 
 ## Workflow
 
@@ -36,6 +37,20 @@ Use Node 20 (see `.nvmrc`).
 `tests/smoke/gtfs.test.ts` is gated on `KTMB_SMOKE=1` and hits the live
 `data.gov.my` feeds. Set the env var locally before running if you're
 touching the GTFS adapter or the route classifier.
+
+## Demo (GitHub Pages site)
+
+The static demo lives under `site/` and is built from real GTFS data
+via `pnpm snapshot`. To preview locally:
+
+```bash
+pnpm snapshot                   # writes site/data/*.json (gitignored)
+npx serve site                  # or any static server
+```
+
+CI's `Deploy demo to GitHub Pages` workflow re-runs the snapshot and
+redeploys the site on every push to `site/**` and on a daily cron.
+See [README.md#demo](README.md#demo).
 
 ## Releases
 
