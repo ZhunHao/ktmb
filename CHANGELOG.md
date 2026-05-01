@@ -8,6 +8,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Real KTMB booking-site client.** `getAvailability` now drives the
+  four-step KITS flow (`/` → `/Trip` → `/Trip/GetTripToken` →
+  `/Trip/Trip`) and returns live fares + listing-level seat counts for
+  every train.
+- **Optional authenticated mode.** Supplying `KTMB_COOKIE` (a logged-in
+  KITS session cookie) makes the client fall through to
+  `/Trip/LayoutV2`, returning per-class fares and OKU-excluded seat
+  counts. Without the cookie, `Fare.seatsLeftIncludesPriority` is
+  `true` to flag that the count includes OKU/priority seats.
 - **Deno Deploy² target** with a live REST API and static demo on one
   origin. New entry `bin/ktmb-deno.ts` bootstraps the same Hono app as
   `ktmb-api`, mounts `serveStatic` for `site/`, and is configured by
@@ -30,6 +39,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 
+- **Synthetic placeholder fixtures**
+  (`tests/fixtures/ktmb/{search,availability}-sample.json`) and the
+  manual reverse-engineering worksheet (`scripts/inspect-ktmb.md`) —
+  superseded by `scripts/capture-ktmb-fixtures.ts`.
 - **`undici` dependency.** The library used it only for `Headers` and
   type aliases; both are available as globals on modern Node and on
   Deno. Dropping it makes the library Deno-compatible without
@@ -39,6 +52,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **`Fare` schema gains an optional `seatsLeftIncludesPriority: boolean`
+  field.** Surfaced by `getAvailability` to flag whether OKU/priority
+  seats are included in the count (true in anonymous mode, omitted in
+  authenticated mode).
 - **Node engine bumped to `>=22.19`** to match prior `undici@8.1.0`
   requirement (was `>=20`); kept post-removal because tooling is
   Node-22-only anyway. CI matrix dropped Node 20.
@@ -160,12 +177,11 @@ booking-side surfaces are unchanged.
   matches what the booking site requires, so no shape change is needed —
   GTFS remains primary for in-window dates, KTMB is the typed fallback.
 - **Capture real KTMB live booking endpoint and replace synthetic schema.**
-  Run the manual procedure in [`scripts/inspect-ktmb.md`](scripts/inspect-ktmb.md)
-  to capture real network traffic from `online.ktmb.com.my`, then update
-  `src/core/ktmb/types.ts` (Zod schema) and `src/core/ktmb/client.ts` (URL
-  + request body) to match. Once landed, `ktmb.fares.get(...)`, the
+  Resolved in Unreleased — the real KITS flow is now implemented in
+  `src/core/ktmb/client.ts` and `getAvailability` returns live fares +
+  seat counts via `ktmb.fares.get(...)`, the
   `/v1/schedules/:trainNo/availability` REST route, and the
-  `get_fare_availability` MCP tool will return live fares + seat counts.
+  `get_fare_availability` MCP tool.
 - **Surface GTFS Realtime trip updates and service alerts** when
   `data.gov.my` publishes them (planned 2026 per the portal docs). The
   GTFS adapter's shape already accommodates them.
@@ -254,8 +270,8 @@ Initial release.
   (Task 11 of the plan) was not performed in this release. Calls via
   `ktmb.fares.get(...)`, `GET /v1/schedules/:trainNo/availability`, and
   the `get_fare_availability` MCP tool will return `upstream_error` until
-  the real endpoint is captured. See [`scripts/inspect-ktmb.md`](scripts/inspect-ktmb.md)
-  for the procedure.
+  the real endpoint is captured. (Resolved in Unreleased — see the
+  Unreleased section above for the live KITS client.)
 - **GTFS Realtime trip updates and service alerts are not available.**
   `data.gov.my` has not yet published these feeds (planned 2026 per
   portal docs). Only vehicle positions are surfaced today.

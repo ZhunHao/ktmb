@@ -11,14 +11,21 @@ Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
 > conservative caching and an honest User-Agent. Do not deploy as a public
 > proxy without adding your own rate limiting.
 
+## KTMB booking client
+
+### Live fares + seat availability
+
+`getAvailability` queries `online.ktmb.com.my` directly. Two modes:
+
+- **Anonymous (default)** — returns a single synthetic class per train with the listing's minimum fare and the listing's "Available seats" count. The count includes OKU/priority seats; `Fare.seatsLeftIncludesPriority` is `true` to make this explicit. Suitable for "is there anything available?" checks.
+- **Authenticated (opt-in)** — set the `KTMB_COOKIE` environment variable to a Cookie header captured from a logged-in browser session at `https://online.ktmb.com.my/`. The client then drives `/Trip/LayoutV2` and returns one entry per coach class (e.g. Business, Standard) with OKU seats excluded.
+
+To capture an auth cookie: log in to KITS in your browser, open DevTools → Application → Cookies, copy `name=value` pairs into a single `name=value; name=value` string. Store it in a secrets manager and inject as `KTMB_COOKIE` at runtime — the project does not ship or commit any session material.
+
+To regenerate test fixtures: `pnpm tsx scripts/capture-ktmb-fixtures.ts` (anonymous flow only; the LayoutV2 fixture must be captured manually with an authenticated browser session — see the script's printed instructions).
+
 ## Known limitations (v0.2)
 
-- **Fare and seat availability are not yet wired to real KTMB endpoints.** The
-  KTMB live booking client (`src/core/ktmb/client.ts`) uses a placeholder URL
-  and a synthetic JSON schema. Calls via `ktmb.fares.get(...)`,
-  `GET /v1/schedules/:trainNo/availability`, or the `get_fare_availability`
-  MCP tool will return an `upstream_error` until the real endpoint is captured
-  (see [`scripts/inspect-ktmb.md`](scripts/inspect-ktmb.md) for the manual procedure).
 - **GTFS Realtime trip updates and service alerts** are not yet published by
   `data.gov.my`. Only vehicle positions are available.
 - **GTFS calendar window is narrow.** `data.gov.my` typically publishes a
@@ -151,7 +158,6 @@ deno task deploy:dev             # serves on http://localhost:8000
 
 Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased). Outstanding items:
 
-- Capture the real KTMB live booking endpoint and replace the synthetic schema.
 - Surface GTFS-RT trip updates and service alerts once `data.gov.my` ships them.
 - KTMB-side fallback for forward-dated `outside_calendar_window` responses.
 - File-backed cache for the parsed GTFS Static feed.
