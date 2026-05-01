@@ -21,18 +21,22 @@ Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
   `data.gov.my` (planned 2026). Only vehicle positions are available.
 - **`Station.lines`** is declared in the public schema but always returns
   `undefined` in v0.1.0. Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased).
-- **Schedule queries past the GTFS calendar window return an empty list.** The
-  `data.gov.my` GTFS Static feed publishes a fixed calendar window (today: ends
-  `20260427`); requests for dates beyond `endDate` resolve to `ok([])` rather
-  than a typed error, so consumers can't tell "no trains" from "feed not yet
-  refreshed". v0.2 will return a typed `feed_stale` error and (once Task 11
-  lands) fall back to the KTMB booking site for forward-dated queries. To check
-  the window yourself, run
-  `npx tsx scripts/inspect-schedules.ts YYYY-MM-DD`.
+- **Schedule queries past the GTFS calendar window return a typed
+  `outside_calendar_window` error.** `GtfsStore` exposes
+  `calendarWindow: { startDate, endDate } | null` (YYYY-MM-DD). When a
+  requested `date` is outside that window, `SchedulesService.listSchedules`,
+  `KomuterService.getTimetable`, `GET /v1/schedules`,
+  `GET /v1/komuter/lines/:line/timetable`, and the `list_schedules` /
+  `get_komuter_timetable` MCP tools all return
+  `err("outside_calendar_window", …)` with the actual window in the
+  message. The REST envelope maps that code to **HTTP 422**. Until v0.2's
+  KTMB-side fallback for forward-dated queries lands, callers must handle
+  this code as a "try again later" signal. To inspect the live window,
+  run `npx tsx scripts/inspect-schedules.ts YYYY-MM-DD`.
 
 Schedules, station search, Komuter timetables, and live vehicle positions
-work against `data.gov.my`'s GTFS feeds (within the published calendar window)
-and are production-ready.
+work against `data.gov.my`'s GTFS feeds (within the published calendar window
+exposed by `GtfsStore.calendarWindow`) and are production-ready.
 
 For the full release notes and the v0.2 roadmap, see [`CHANGELOG.md`](CHANGELOG.md).
 
@@ -129,6 +133,8 @@ Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased). Headline items for v0.2:
 - Surface GTFS-RT trip updates and service alerts once `data.gov.my` ships them.
 - Populate `Station.lines` from the route classifier.
 - Re-export `parseDateMyt` from the public surface.
+- Periodic GTFS refresh in the bin processes (cold-start + every 6 h).
+- KTMB-side fallback for forward-dated `outside_calendar_window` responses.
 - File-backed cache for the parsed GTFS Static feed.
 - HTTP/SSE MCP transport for shared remote instances.
 
