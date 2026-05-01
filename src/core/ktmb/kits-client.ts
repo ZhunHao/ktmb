@@ -140,7 +140,11 @@ export class KitsClient {
     }
     let rotated: string;
     try {
-      rotated = JSON.parse(tokenRes.body).formToken as string;
+      const raw = JSON.parse(tokenRes.body) as { formToken?: unknown };
+      if (typeof raw.formToken !== "string" || !raw.formToken) {
+        return err("parse_error", "trip-token response missing formToken");
+      }
+      rotated = raw.formToken;
     } catch (e) {
       return err("parse_error", "trip-token body not JSON", e);
     }

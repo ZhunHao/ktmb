@@ -97,3 +97,63 @@ describe("KitsClient.getLayout (authenticated)", () => {
     expect(layout.data.classes.every((c) => c.seatsLeftIncludesPriority === false)).toBe(true);
   });
 });
+
+describe("KitsClient.getLayout (error paths)", () => {
+  it("returns invalid_input when called before searchTrips", async () => {
+    const client = new KitsClient();
+    const r = await client.getLayout({ tripData: "x" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("invalid_input");
+  });
+
+  it("returns upstream_error when LayoutV2 returns 401", async () => {
+    installAnonymousHandlers();
+    server.use(
+      http.post("https://online.ktmb.com.my/Trip/LayoutV2", () =>
+        HttpResponse.text("{}", { status: 401 }),
+      ),
+    );
+    const client = new KitsClient({
+      cookie: ".AspNetCore.Identity.Application=stale-token",
+    });
+    const search = await client.searchTrips({
+      fromKitsId: "19100",
+      toKitsId: "100",
+      date: "2026-05-16",
+    });
+    if (!search.ok) throw new Error(search.error.message);
+    const target = search.data[0];
+    expect(target).toBeDefined();
+    const r = await client.getLayout({ tripData: target!.tripData });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("upstream_error");
+    expect(r.error.message).toContain("authenticated cookie");
+  });
+
+  it("returns upstream_error on non-2xx LayoutV2", async () => {
+    installAnonymousHandlers();
+    server.use(
+      http.post("https://online.ktmb.com.my/Trip/LayoutV2", () =>
+        HttpResponse.text("oops", { status: 500 }),
+      ),
+    );
+    const client = new KitsClient({
+      cookie: ".AspNetCore.Identity.Application=auth-token",
+    });
+    const search = await client.searchTrips({
+      fromKitsId: "19100",
+      toKitsId: "100",
+      date: "2026-05-16",
+    });
+    if (!search.ok) throw new Error(search.error.message);
+    const target = search.data[0];
+    expect(target).toBeDefined();
+    const r = await client.getLayout({ tripData: target!.tripData });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("upstream_error");
+    expect(r.error.message).toContain("500");
+  });
+});
