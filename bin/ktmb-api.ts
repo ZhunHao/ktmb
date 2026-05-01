@@ -1,29 +1,30 @@
 import { serve } from "@hono/node-server";
-import { GtfsLoader } from "../src/core/gtfs/loader.js";
-import { fetchVehiclePositions } from "../src/core/gtfs/realtime.js";
-import { ktmbGetAvailability } from "../src/core/index.js";
-import { createKtmb } from "../src/core/index.js";
 import { buildApp } from "../src/api/server.js";
+import { createKtmbRuntime } from "../src/runtime/bootstrap.js";
 
 const FEED_STATIC = "https://api.data.gov.my/gtfs-static/ktmb";
 const FEED_RT = "https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb";
 
 const main = async (): Promise<void> => {
   const port = Number(process.env.PORT ?? 8787);
-  const loader = new GtfsLoader(FEED_STATIC);
-  const r = await loader.load();
-  if (!r.ok) {
-    console.error("[ktmb-api] initial GTFS load failed:", r.error);
-    process.exit(1);
-  }
-  const ktmb = createKtmb({
-    store: r.data,
-    fareGetter: ktmbGetAvailability,
-    realtimeFetcher: () => fetchVehiclePositions(FEED_RT),
+  const refreshIntervalMs = Number(process.env.KTMB_REFRESH_MS ?? 6 * 60 * 60 * 1000);
+  const rt = await createKtmbRuntime({
+    feedStaticUrl: FEED_STATIC,
+    feedRealtimeUrl: FEED_RT,
+    refreshIntervalMs,
   });
-  const app = buildApp(ktmb);
-  serve({ fetch: app.fetch, port });
+  const app = buildApp(rt.ktmb);
+  const server = serve({ fetch: app.fetch, port });
   console.log(`[ktmb-api] listening on http://localhost:${port}`);
+
+  const stop = (signal: string): void => {
+    console.log(`[ktmb-api] ${signal} received, shutting down`);
+    rt.shutdown();
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 5_000).unref();
+  };
+  process.on("SIGTERM", () => stop("SIGTERM"));
+  process.on("SIGINT", () => stop("SIGINT"));
 };
 
 main().catch((e) => {
