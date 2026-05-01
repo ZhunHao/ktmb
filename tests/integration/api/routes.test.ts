@@ -52,6 +52,15 @@ describe("REST routes", () => {
     expect(res.status).toBe(400);
   });
 
+  it("GET /v1/schedules returns 422 outside_calendar_window when date is past feed end", async () => {
+    const res = await app.request("/v1/schedules?from=KUL&to=BTW&date=2027-01-01");
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { ok: false; error: { code: string; message: string } };
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("outside_calendar_window");
+    expect(body.error.message).toContain("2026-12-31");
+  });
+
   it("GET /v1/schedules/:trainNo/availability returns fare classes", async () => {
     const res = await app.request(
       "/v1/schedules/EG9322/availability?from=KUL&to=BTW&date=2026-05-01",

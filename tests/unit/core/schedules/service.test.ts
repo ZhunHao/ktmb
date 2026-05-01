@@ -45,4 +45,21 @@ describe("SchedulesService", () => {
     if (!r.ok) return;
     expect(r.data).toEqual([]);
   });
+
+  it("returns outside_calendar_window when date is before window start", () => {
+    const r = make().listSchedules({ from: "KUL", to: "BTW", date: "2025-12-31" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("outside_calendar_window");
+    expect(r.error.message).toContain("2025-12-31");
+    expect(r.error.message).toContain("2026-01-01");
+    expect(r.error.message).toContain("2026-12-31");
+  });
+
+  it("returns outside_calendar_window when date is after window end", () => {
+    const r = make().listSchedules({ from: "KUL", to: "BTW", date: "2027-01-01" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("outside_calendar_window");
+  });
 });

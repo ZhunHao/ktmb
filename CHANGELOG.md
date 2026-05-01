@@ -10,6 +10,20 @@ Tracked follow-ups for the next minor release. Each item links to a known gap
 that did not block v0.1.0 but will improve completeness, correctness, or
 ergonomics.
 
+### Added
+
+- **Typed `outside_calendar_window` error when a requested date falls
+  outside the GTFS feed's calendar window.** `GtfsStore` now exposes
+  `calendarWindow: { startDate, endDate } | null` (YYYY-MM-DD, computed as
+  the min `startDate` and max `endDate` across all `calendar.txt` entries),
+  plus an `isOutsideCalendarWindow(date)` helper.
+  `SchedulesService.listSchedules` and `KomuterService.getTimetable` now
+  return `err("outside_calendar_window", …)` with the actual window in the
+  message instead of `ok([])`, so callers can distinguish "no trains on
+  that date" from "feed window has lapsed". The REST envelope maps the new
+  code to **HTTP 422 Unprocessable Entity**, and the MCP `list_schedules`
+  tool surfaces the same typed error through its existing JSON envelope.
+
 ### Fixed
 
 - **Route classification now matches the real `data.gov.my` GTFS feed.**
@@ -29,18 +43,6 @@ ergonomics.
 
 ### Planned
 
-- **Typed `feed_stale` / `outside_calendar_window` error when a requested
-  date is past the GTFS calendar `endDate`.** Today the live `data.gov.my`
-  feed publishes a fixed forward window that gets re-extended periodically
-  — when the calendar lapses (e.g. window ends today and the caller asks
-  for tomorrow), `SchedulesService.listSchedules`,
-  `GET /v1/schedules`, and the `list_schedules` MCP tool all return
-  `ok([])`. That makes "no trains today" indistinguishable from "feed is
-  stale". The fix: expose `store.calendarWindow: { startDate, endDate }`,
-  let services compare against it, and return a typed
-  `outside_calendar_window` error with the actual window in the message.
-  Verified against the live feed via
-  `npx tsx scripts/inspect-schedules.ts YYYY-MM-DD`.
 - **Periodic GTFS refresh in the bin processes.** `GtfsLoader.refresh()`
   already exists but is never scheduled. Wire it into `ktmb-api` and
   `ktmb-mcp` (cold-start refresh + every 6h) so a freshly published feed

@@ -32,4 +32,17 @@ describe("GtfsStore", () => {
     const times = s.stopTimesForTrip("EG9322");
     expect(times.map((t) => t.stopId)).toEqual(["KUL", "BTW"]);
   });
+
+  it("calendarWindow exposes min start and max end across calendars (YYYY-MM-DD)", () => {
+    expect(store().calendarWindow).toEqual({ startDate: "2026-01-01", endDate: "2026-12-31" });
+  });
+
+  it("isOutsideCalendarWindow flags dates outside [startDate, endDate]", () => {
+    const s = store();
+    expect(s.isOutsideCalendarWindow("2025-12-31")).toBe(true);
+    expect(s.isOutsideCalendarWindow("2026-01-01")).toBe(false);
+    expect(s.isOutsideCalendarWindow("2026-06-15")).toBe(false);
+    expect(s.isOutsideCalendarWindow("2026-12-31")).toBe(false);
+    expect(s.isOutsideCalendarWindow("2027-01-01")).toBe(true);
+  });
 });

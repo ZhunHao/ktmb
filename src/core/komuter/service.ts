@@ -28,6 +28,13 @@ export class KomuterService {
     if (!this.store.findStop(input.station)) {
       return err("not_found", `unknown station: ${input.station}`);
     }
+    if (this.store.isOutsideCalendarWindow(input.date)) {
+      const w = this.store.calendarWindow!;
+      return err(
+        "outside_calendar_window",
+        `requested date ${input.date} is outside GTFS calendar window ${w.startDate}..${w.endDate}`,
+      );
+    }
     const trips = this.store.tripsForRoute(route.routeId);
     const tripsRunning = new Set(this.store.tripsRunningOn(input.date).map((t) => t.tripId));
     const out: KomuterDeparture[] = [];

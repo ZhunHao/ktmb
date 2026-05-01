@@ -1,3 +1,4 @@
+import type { CalendarWindow } from "../types.js";
 import type { Calendar, GtfsStop, Route, StaticFeed, StopTime, Trip } from "./types.js";
 
 const dayOfWeekMyt = (yyyymmdd: string): number => {
@@ -9,6 +10,20 @@ const dayOfWeekMyt = (yyyymmdd: string): number => {
 
 const yyyymmdd = (date: string): string => date.replace(/-/g, "");
 
+const dashed = (compact: string): string =>
+  `${compact.slice(0, 4)}-${compact.slice(4, 6)}-${compact.slice(6, 8)}`;
+
+const computeCalendarWindow = (calendar: readonly Calendar[]): CalendarWindow | null => {
+  if (calendar.length === 0) return null;
+  let minStart = calendar[0]!.startDate;
+  let maxEnd = calendar[0]!.endDate;
+  for (const c of calendar) {
+    if (c.startDate < minStart) minStart = c.startDate;
+    if (c.endDate > maxEnd) maxEnd = c.endDate;
+  }
+  return { startDate: dashed(minStart), endDate: dashed(maxEnd) };
+};
+
 export class GtfsStore {
   private readonly stopsById = new Map<string, GtfsStop>();
   private readonly routesById = new Map<string, Route>();
@@ -16,6 +31,7 @@ export class GtfsStore {
   private readonly stopTimesByTrip = new Map<string, StopTime[]>();
   private readonly calendarByServiceId = new Map<string, Calendar>();
   private readonly tripsByRoute = new Map<string, Trip[]>();
+  public readonly calendarWindow: CalendarWindow | null;
 
   constructor(public readonly feed: StaticFeed) {
     for (const s of feed.stops) this.stopsById.set(s.stopId, s);
@@ -32,6 +48,13 @@ export class GtfsStore {
       this.stopTimesByTrip.set(st.tripId, list);
     }
     for (const c of feed.calendar) this.calendarByServiceId.set(c.serviceId, c);
+    this.calendarWindow = computeCalendarWindow(feed.calendar);
+  }
+
+  isOutsideCalendarWindow(date: string): boolean {
+    const w = this.calendarWindow;
+    if (!w) return false;
+    return date < w.startDate || date > w.endDate;
   }
 
   findStop(stopId: string): GtfsStop | undefined {

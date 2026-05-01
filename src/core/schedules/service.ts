@@ -1,7 +1,7 @@
 import { gtfsTimeToIso } from "../time/gtfs-rollover.js";
 import type { GtfsStore } from "../gtfs/store.js";
 import type { Result } from "../result.js";
-import { ok } from "../result.js";
+import { err, ok } from "../result.js";
 import type { Stop, TrainSchedule } from "../types.js";
 import { classifyRoute } from "./route-classifier.js";
 
@@ -18,6 +18,13 @@ export class SchedulesService {
   constructor(private readonly store: GtfsStore) {}
 
   listSchedules(input: ListSchedulesInput): Result<TrainSchedule[]> {
+    if (this.store.isOutsideCalendarWindow(input.date)) {
+      const w = this.store.calendarWindow!;
+      return err(
+        "outside_calendar_window",
+        `requested date ${input.date} is outside GTFS calendar window ${w.startDate}..${w.endDate}`,
+      );
+    }
     const trips = this.store.tripsRunningOn(input.date);
     const out: TrainSchedule[] = [];
     for (const trip of trips) {

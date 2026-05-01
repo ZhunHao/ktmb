@@ -13,6 +13,7 @@ describe("REST envelope helpers", () => {
       ["invalid_input", 400],
       ["not_found", 404],
       ["rate_limited", 429],
+      ["outside_calendar_window", 422],
       ["upstream_error", 502],
       ["parse_error", 502],
     ];

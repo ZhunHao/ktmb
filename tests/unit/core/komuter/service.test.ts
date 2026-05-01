@@ -28,4 +28,12 @@ describe("KomuterService", () => {
     if (r.ok) return;
     expect(r.error.code).toBe("not_found");
   });
+
+  it("returns outside_calendar_window when date is past the feed's calendar end", () => {
+    const r = make().getTimetable({ line: "KOM-PK", station: "KUL", date: "2027-01-01" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("outside_calendar_window");
+    expect(r.error.message).toContain("2026-12-31");
+  });
 });

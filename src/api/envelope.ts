@@ -8,6 +8,8 @@ export const statusForError = (code: ErrorCode): number => {
       return 404;
     case "rate_limited":
       return 429;
+    case "outside_calendar_window":
+      return 422;
     case "upstream_error":
     case "parse_error":
       return 502;

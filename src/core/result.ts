@@ -3,7 +3,8 @@ export type ErrorCode =
   | "not_found"
   | "rate_limited"
   | "upstream_error"
-  | "parse_error";
+  | "parse_error"
+  | "outside_calendar_window";
 
 export type ResultError = {
   code: ErrorCode;

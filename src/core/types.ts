@@ -79,6 +79,11 @@ export const KomuterDepartureSchema = z.object({
 });
 export type KomuterDeparture = z.infer<typeof KomuterDepartureSchema>;
 
+export type CalendarWindow = {
+  startDate: string;
+  endDate: string;
+};
+
 export const VehiclePositionSchema = z.object({
   vehicleId: z.string().min(1),
   tripId: z.string().optional(),
