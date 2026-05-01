@@ -26,3 +26,14 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm vitest run --coverage
       - run: pnpm build
+      - name: Smoke-import the built bins
+        run: |
+          node --input-type=module -e "import('./dist/bin/ktmb-api.js').catch((e) => { console.error('ktmb-api import failed:', e); process.exit(1); })" &
+          API_PID=$!
+          sleep 1
+          kill $API_PID 2>/dev/null || true
+          node --input-type=module -e "import('./dist/bin/ktmb-mcp.js').catch((e) => { console.error('ktmb-mcp import failed:', e); process.exit(1); })" &
+          MCP_PID=$!
+          sleep 1
+          kill $MCP_PID 2>/dev/null || true
+          echo 'bins imported cleanly'

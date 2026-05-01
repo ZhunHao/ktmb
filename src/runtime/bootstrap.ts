@@ -2,12 +2,14 @@ import { GtfsLoader } from "../core/gtfs/loader.js";
 import { fetchVehiclePositions } from "../core/gtfs/realtime.js";
 import type { GtfsStore } from "../core/gtfs/store.js";
 import { createKtmb, ktmbGetAvailability, type Ktmb } from "../core/index.js";
+import { createLogger, type Logger } from "./logger.js";
 
 export type CreateRuntimeOptions = {
   feedStaticUrl: string;
   feedRealtimeUrl: string;
   refreshIntervalMs?: number;
   retryDelaysMs?: readonly number[];
+  logger?: Logger;
 };
 
 export type Runtime = {
@@ -34,6 +36,7 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
     realtimeFetcher: () => fetchVehiclePositions(opts.feedRealtimeUrl),
   });
   const swap = (ktmb as Ktmb & { swapStore: (s: GtfsStore) => void }).swapStore;
+  const logger = opts.logger ?? createLogger();
 
   const interval = opts.refreshIntervalMs ?? DEFAULT_REFRESH_MS;
   let timer: NodeJS.Timeout | undefined;
@@ -51,12 +54,12 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
           if (rr.ok) {
             swap(rr.data);
           } else {
-            console.error("[ktmb] refresh failed:", rr.error);
+            logger.error("[ktmb] refresh failed", rr.error);
           }
         })
         .catch((e) => {
           if (stopped) return;
-          console.error("[ktmb] refresh threw:", e);
+          logger.error("[ktmb] refresh threw", e);
         })
         .finally(() => {
           if (!stopped) setImmediate(() => scheduleNext());
