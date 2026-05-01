@@ -1,6 +1,6 @@
 {
   "name": "ktmb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Read-only TypeScript library, REST API, and MCP server for KTMB rail data (GTFS + live booking site)",
   "license": "MIT",
   "type": "module",

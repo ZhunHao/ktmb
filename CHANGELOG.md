@@ -6,9 +6,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Tracked follow-ups for the next minor release. Each item links to a known gap
-that did not block v0.1.0 but will improve completeness, correctness, or
-ergonomics.
+### Planned
+
+- _(empty — file new entries here as Phase C/D land further work)_
+
+## [0.2.0] - 2026-05-01
+
+Tech-debt remediation release. Aligns the public surface and bin processes
+with the v0.1.0 caveats list in [README.md](README.md), drops one dead
+schema field, and lifts test coverage above the project's 80 % branch
+target. No data-layer changes — GTFS shapes, REST/MCP tool contracts, and
+booking-side surfaces are unchanged.
 
 ### Added
 
