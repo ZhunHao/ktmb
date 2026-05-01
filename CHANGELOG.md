@@ -23,6 +23,35 @@ ergonomics.
   that date" from "feed window has lapsed". The REST envelope maps the new
   code to **HTTP 422 Unprocessable Entity**, and the MCP `list_schedules`
   tool surfaces the same typed error through its existing JSON envelope.
+- **Periodic GTFS refresh in the bin processes.** Both `ktmb-api` and
+  `ktmb-mcp` now perform a cold-start `GtfsLoader.load()` and then refresh
+  every `KTMB_REFRESH_MS` (default 6 h) through a shared
+  `src/runtime/bootstrap.ts` runtime. A successful refresh hot-swaps the
+  store on the live `Ktmb` facade — services read the live store via a
+  getter, so in-flight requests see the new feed without restart. The
+  refresh uses a `setTimeout`-reschedule pattern with stop-on-shutdown
+  guards, preventing tick pile-up if a refresh stalls. Concurrent
+  `loader.refresh()` calls share a single fetch via an in-flight promise
+  guard. SIGTERM and SIGINT now drain the HTTP server / stdio transport
+  before exit (5 s hard deadline on `ktmb-api`).
+- **`parseDateMyt` re-exported** from the public surface so library
+  consumers can validate dates the same way the built-in REST/MCP layers do.
+
+### Changed
+
+- **Service layer reads `GtfsStore` via a getter.** `StationsService`,
+  `SchedulesService`, and `KomuterService` constructors now take
+  `() => GtfsStore` instead of a `GtfsStore` snapshot. The public
+  `createKtmb({ store, … })` signature is unchanged; library consumers
+  constructing services directly must pass a closure.
+- **`app.notFound` returns the standard envelope** through `errorResponse`
+  instead of hand-rolled JSON — prevents drift if the envelope shape ever
+  changes.
+
+### Removed
+
+- **Stale `feed_stale` planned-error language in the README.** The shipped
+  surface is `outside_calendar_window` mapped to HTTP 422.
 
 ### Fixed
 
@@ -43,11 +72,6 @@ ergonomics.
 
 ### Planned
 
-- **Periodic GTFS refresh in the bin processes.** `GtfsLoader.refresh()`
-  already exists but is never scheduled. Wire it into `ktmb-api` and
-  `ktmb-mcp` (cold-start refresh + every 6h) so a freshly published feed
-  is picked up without a process restart. Pairs with the concurrent-refresh
-  guard below.
 - **KTMB fallback for forward-dated schedule queries beyond the GTFS
   window.** Once the real KTMB booking endpoint is captured (see next
   item), extend `SchedulesService.listSchedules` to route `(from, to,
@@ -69,12 +93,6 @@ ergonomics.
   optional `lines: ("ETS"|"Intercity"|"Komuter"|"ShuttleTebrau")[]`, but
   `StationsService` does not derive it today. The data is available via
   the route classifier + `tripsForRoute` + `stopTimesForTrip`.
-- **Re-export `parseDateMyt`** from the public surface. Library consumers
-  writing custom transports cannot validate dates the same way the
-  built-in REST/MCP layers do without it.
-- **Fold `Hono.notFound` envelope through `errorResponse`.** The 404
-  response in `src/api/server.ts` is hand-rolled; reusing the helper
-  prevents drift if the envelope shape ever changes.
 - **MCP server start/dispatch tests.** `src/mcp/server.ts` is at 0% line
   coverage today; tool handlers are covered via direct invocation, but
   the `buildMcpServer` registration and `runStdio` wiring are not.
@@ -84,9 +102,6 @@ ergonomics.
 - **File-backed cache for the parsed GTFS Static feed** to reduce
   cold-start time across bin restarts. Currently the loader re-downloads
   on every process start.
-- **Concurrent-refresh guard in `GtfsLoader`.** Two overlapping
-  `refresh()` calls today both fetch and the later resolution wins. A
-  one-line in-flight `Promise` cache would dedupe.
 - **HTTP/SSE MCP transport** for shared remote instances. v0.1.0 is
   stdio-only.
 - **RTS Link integration** when it opens (~2027) — `bookingProvider`
