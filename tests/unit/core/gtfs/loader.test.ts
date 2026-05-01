@@ -57,4 +57,25 @@ describe("GtfsLoader", () => {
     expect(r.ok).toBe(false);
     expect(loader.currentStore()).toBeUndefined();
   });
+
+  it("dedupes concurrent refresh calls into a single fetch", async () => {
+    let calls = 0;
+    server.use(
+      http.get(FEED_URL, () => {
+        calls++;
+        return new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        });
+      }),
+    );
+    const loader = new GtfsLoader(FEED_URL);
+    const initial = await loader.load();
+    expect(initial.ok).toBe(true);
+    expect(calls).toBe(1);
+
+    const [a, b] = await Promise.all([loader.refresh(), loader.refresh()]);
+    expect(a.ok && b.ok).toBe(true);
+    expect(calls).toBe(2);
+  });
 });

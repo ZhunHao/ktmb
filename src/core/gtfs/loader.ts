@@ -7,6 +7,7 @@ import { GtfsStore } from "./store.js";
 
 export class GtfsLoader {
   private store: GtfsStore | undefined;
+  private inflight: Promise<Result<GtfsStore>> | undefined;
 
   constructor(private readonly feedUrl: string) {}
 
@@ -15,15 +16,22 @@ export class GtfsLoader {
   }
 
   async load(opts: Pick<FetchOptions, "retryDelaysMs"> = {}): Promise<Result<GtfsStore>> {
-    const r = await this.fetchAndParse(opts);
-    if (r.ok) this.store = r.data;
-    return r;
+    if (this.inflight) return this.inflight;
+    const p = (async () => {
+      const r = await this.fetchAndParse(opts);
+      if (r.ok) this.store = r.data;
+      return r;
+    })();
+    this.inflight = p;
+    try {
+      return await p;
+    } finally {
+      if (this.inflight === p) this.inflight = undefined;
+    }
   }
 
-  async refresh(opts: Pick<FetchOptions, "retryDelaysMs"> = {}): Promise<Result<GtfsStore>> {
-    const r = await this.fetchAndParse(opts);
-    if (r.ok) this.store = r.data;
-    return r;
+  refresh(opts: Pick<FetchOptions, "retryDelaysMs"> = {}): Promise<Result<GtfsStore>> {
+    return this.load(opts);
   }
 
   private async fetchAndParse(
