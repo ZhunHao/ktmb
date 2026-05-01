@@ -31,4 +31,17 @@ describe("StationsService", () => {
   it("Woodlands CIQ is tagged as country=SG", () => {
     expect(make().getByCode("WCQ")?.country).toBe("SG");
   });
+
+  it("populates Station.lines from classifyRoute over trips that visit the stop", () => {
+    const store = new GtfsStore(parseStaticFeed(buildMiniFeed()));
+    const svc = new StationsService(() => store);
+    const kul = svc.getByCode("KUL");
+    expect(kul?.lines).toEqual(expect.arrayContaining(["ETS", "Komuter"]));
+
+    const jbs = svc.getByCode("JBS");
+    expect(jbs?.lines).toEqual(expect.arrayContaining(["Intercity", "ShuttleTebrau"]));
+
+    const tpt = svc.getByCode("TPT");
+    expect(tpt?.lines).toEqual(["Intercity"]);
+  });
 });
