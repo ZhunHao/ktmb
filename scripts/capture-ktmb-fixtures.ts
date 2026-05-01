@@ -49,7 +49,7 @@ const main = async (): Promise<void> => {
   if (!rvt) throw new Error("RVT not found in home page");
   const jsStationsMatch = home.body.match(/var jsStations = (\[[\s\S]*?\]);/);
   if (!jsStationsMatch) throw new Error("jsStations not found");
-  const jsStations = JSON.parse(jsStationsMatch[1]) as Array<{
+  const jsStations = JSON.parse(jsStationsMatch[1]!) as Array<{
     Id: string;
     StationData: string;
   }>;
