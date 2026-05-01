@@ -42,7 +42,7 @@
     "fflate": "^0.8.2",
     "fuse.js": "^7.3.0",
     "gtfs-realtime-bindings": "^1.1.1",
-    "hono": "^4.12.15",
+    "hono": "^4.12.16",
     "lru-cache": "^11.0.2",
     "p-queue": "^9.1.2",
     "zod": "^4.3.6"
