@@ -69,6 +69,13 @@ describe("REST routes", () => {
     const body = (await res.json()) as { data: Array<{ className: string }> };
     expect(body.data[0]?.className).toBe("Premier");
   });
+
+  it("returns the standard envelope on 404 for unmatched routes", async () => {
+    const res = await app.request("/v1/no-such-path");
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as { ok: false; error: { code: string; message: string } };
+    expect(body).toEqual({ ok: false, error: { code: "not_found", message: "no such route" } });
+  });
 });
 
 describe("Komuter + realtime routes", () => {
