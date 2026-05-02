@@ -30,6 +30,12 @@ The bundled GTFS feed publishes 30–45 days ahead. When you request a date past
 
 Set `KTMB_FORWARD_FALLBACK=1` to fall through to the KITS booking site for those dates. The synthesised `TrainSchedule[]` carries train number, service category (ETS/Intercity), departure/arrival at the OD pair, and journey duration — but no intermediate stops, since the public listing doesn't include them. Combine with `KTMB_COOKIE` to also populate `classes` from `/Trip/LayoutV2`.
 
+### GTFS feed cache
+
+Set `KTMB_CACHE_DIR=/path/to/cache` to enable a file-backed cache for the GTFS static feed. Subsequent cold starts within `KTMB_CACHE_MAX_AGE_MS` (default `21600000` = 6h) skip the network fetch and parse from disk, taking the cold-start cost from ~2s down to ~150ms.
+
+The cache key is derived from the feed URL only, so multiple binaries pointing at the same URL share the cache safely. Cache misses fall back to the network. `refresh()` always bypasses the cache.
+
 ## Known limitations (v0.2)
 
 - **GTFS Realtime trip updates and service alerts** are not yet published by

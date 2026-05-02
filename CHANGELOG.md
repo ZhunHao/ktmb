@@ -9,6 +9,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - `SchedulesService.listSchedulesAsync()` and the `list_schedules` MCP tool fall through to KITS when `KTMB_FORWARD_FALLBACK=1` is set and the requested date is past the GTFS calendar window.
+- Optional file-backed GTFS feed cache. Set `KTMB_CACHE_DIR` to enable; `KTMB_CACHE_MAX_AGE_MS` (default 6h) controls staleness.
 - **Real KTMB booking-site client.** `getAvailability` now drives the
   four-step KITS flow (`/` → `/Trip` → `/Trip/GetTripToken` →
   `/Trip/Trip`) and returns live fares + listing-level seat counts for
