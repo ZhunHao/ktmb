@@ -182,9 +182,6 @@ deno task deploy:dev             # serves on http://localhost:8000
 Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased). Outstanding items:
 
 - Surface GTFS-RT trip updates and service alerts once `data.gov.my` ships them.
-- KTMB-side fallback for forward-dated `outside_calendar_window` responses.
-- File-backed cache for the parsed GTFS Static feed.
-- HTTP/SSE MCP transport for shared remote instances.
 
 ## License
 

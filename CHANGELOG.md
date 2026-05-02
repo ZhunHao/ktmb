@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-02
+
 ### Added
 
 - `SchedulesService.listSchedulesAsync()` and the `list_schedules` MCP tool fall through to KITS when `KTMB_FORWARD_FALLBACK=1` is set and the requested date is past the GTFS calendar window.
@@ -172,13 +174,6 @@ booking-side surfaces are unchanged.
 
 ### Planned
 
-- **KTMB fallback for forward-dated schedule queries beyond the GTFS
-  window.** Once the real KTMB booking endpoint is captured (see next
-  item), extend `SchedulesService.listSchedules` to route `(from, to,
-  date)` queries to the KTMB live client when `date > calendarWindow.endDate`
-  and `date <= today + 30`. The existing `from + to + date` API contract
-  matches what the booking site requires, so no shape change is needed —
-  GTFS remains primary for in-window dates, KTMB is the typed fallback.
 - **Capture real KTMB live booking endpoint and replace synthetic schema.**
   Resolved in Unreleased — the real KITS flow is now implemented in
   `src/core/ktmb/client.ts` and `getAvailability` returns live fares +
@@ -188,11 +183,6 @@ booking-side surfaces are unchanged.
 - **Surface GTFS Realtime trip updates and service alerts** when
   `data.gov.my` publishes them (planned 2026 per the portal docs). The
   GTFS adapter's shape already accommodates them.
-- **File-backed cache for the parsed GTFS Static feed** to reduce
-  cold-start time across bin restarts. Currently the loader re-downloads
-  on every process start.
-- **HTTP/SSE MCP transport** for shared remote instances. v0.1.0 is
-  stdio-only.
 - **RTS Link integration** when it opens (~2027) — `bookingProvider`
   is intentionally a string, not a fixed union, so adding a second
   operator will not be a breaking change.
@@ -301,5 +291,7 @@ are safe to depend on in v0.1.0:
 - Komuter line listing and per-station timetables.
 - Live vehicle positions (lat/lon, optional bearing/speed, ISO timestamp).
 
-[Unreleased]: https://github.com/zhunhao/ktmb/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/zhunhao/ktmb/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/zhunhao/ktmb/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/zhunhao/ktmb/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/zhunhao/ktmb/releases/tag/v0.1.0
