@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { resolveKitsStationId } from "../../../../src/core/ktmb/station-map.js";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+import {
+  _aliasEntries,
+  resolveKitsStationId,
+} from "../../../../src/core/ktmb/station-map.js";
+import { parseHomePage } from "../../../../src/core/ktmb/parse-home.js";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const homeHtml = readFileSync(
+  resolve(here, "../../../fixtures/ktmb/home.html"),
+  "utf8",
+);
 
 const sampleCatalog = [
   { id: "19100", description: "KL SENTRAL", stationData: "T1", trainServices: ["ETS"], state: "Selangor" },
@@ -30,5 +43,26 @@ describe("resolveKitsStationId", () => {
     expect(
       resolveKitsStationId(sampleCatalog, { stopName: "  butterworth ", stopId: "X" }),
     ).toBe("100");
+  });
+});
+
+describe("KITS_ALIASES coverage", () => {
+  const parsed = parseHomePage(homeHtml);
+  if (!parsed.ok) throw new Error(`home.html parse failed: ${parsed.error.message}`);
+  const stationIds = new Set(parsed.data.stations.map((s) => s.id));
+
+  it("home.html parses to a non-empty catalog", () => {
+    expect(stationIds.size).toBeGreaterThan(50);
+  });
+
+  it.each(_aliasEntries())(
+    "alias %s -> %s exists in the KITS home-page catalog",
+    (_alias, kitsId) => {
+      expect(stationIds.has(kitsId)).toBe(true);
+    },
+  );
+
+  it("covers at least 30 ETS/Intercity stations", () => {
+    expect(_aliasEntries().length).toBeGreaterThanOrEqual(30);
   });
 });
