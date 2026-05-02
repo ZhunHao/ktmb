@@ -41,6 +41,6 @@ export const listSchedulesHandler =
     if (!d.ok) {
       return { content: [{ type: "text" as const, text: JSON.stringify(d) }], isError: true };
     }
-    const r = ktmb.schedules.listSchedules({ from, to, date: d.data });
+    const r = await ktmb.schedules.listSchedulesAsync({ from, to, date: d.data });
     return { content: [{ type: "text" as const, text: JSON.stringify(r) }], isError: !r.ok };
   };
