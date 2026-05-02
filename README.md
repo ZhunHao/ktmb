@@ -36,6 +36,16 @@ Set `KTMB_CACHE_DIR=/path/to/cache` to enable a file-backed cache for the GTFS s
 
 The cache key is derived from the feed URL only, so multiple binaries pointing at the same URL share the cache safely. Cache misses fall back to the network. `refresh()` always bypasses the cache.
 
+### Transports
+
+`ktmb-mcp` defaults to stdio. For shared/remote deployments, run with `--transport=http`:
+
+`ktmb-mcp --transport=http --port=3030`
+
+The server mounts a single `POST/GET /mcp` endpoint that speaks the MCP Streamable HTTP protocol. Bind address defaults to `127.0.0.1`; pass `--host=0.0.0.0` to expose externally — only behind a TLS-terminating reverse proxy with auth, since the server itself does no authn/z.
+
+Environment variables: `PORT` and `HOST` provide defaults; CLI flags override.
+
 ## Known limitations (v0.2)
 
 - **GTFS Realtime trip updates and service alerts** are not yet published by
