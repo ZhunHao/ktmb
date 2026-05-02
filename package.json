@@ -45,15 +45,15 @@
     "gtfs-realtime-bindings": "^1.1.1",
     "hono": "^4.12.16",
     "lru-cache": "^11.0.2",
-    "p-queue": "^9.1.2",
-    "zod": "^4.3.6"
+    "p-queue": "^9.2.0",
+    "zod": "^4.4.2"
   },
   "devDependencies": {
     "@hono/node-server": "^2.0.1",
     "@types/node": "^25.6.0",
     "@typescript/native-preview": "7.0.0-dev.20260430.1",
     "@vitest/coverage-v8": "^4.1.5",
-    "msw": "^2.13.6",
+    "msw": "^2.14.2",
     "tsup": "^8.5.1",
     "tsx": "^4.19.2",
     "typescript": "^6.0.3",
