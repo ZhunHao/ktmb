@@ -24,15 +24,22 @@ To capture an auth cookie: log in to KITS in your browser, open DevTools → App
 
 To regenerate test fixtures: `pnpm tsx scripts/capture-ktmb-fixtures.ts` (anonymous flow only; the LayoutV2 fixture must be captured manually with an authenticated browser session — see the script's printed instructions).
 
+### Forward-dated schedules
+
+The bundled GTFS feed publishes 30–45 days ahead. When you request a date past the feed's calendar window, `list_schedules` returns `outside_calendar_window` by default.
+
+Set `KTMB_FORWARD_FALLBACK=1` to fall through to the KITS booking site for those dates. The synthesised `TrainSchedule[]` carries train number, service category (ETS/Intercity), departure/arrival at the OD pair, and journey duration — but no intermediate stops, since the public listing doesn't include them. Combine with `KTMB_COOKIE` to also populate `classes` from `/Trip/LayoutV2`.
+
 ## Known limitations (v0.2)
 
 - **GTFS Realtime trip updates and service alerts** are not yet published by
   `data.gov.my`. Only vehicle positions are available.
 - **GTFS calendar window is narrow.** `data.gov.my` typically publishes a
   ~3-month window. Requests past `GtfsStore.calendarWindow.endDate` return
-  `err("outside_calendar_window", …)` (HTTP 422 via REST). The library does
-  not yet fall back to the KTMB booking site for forward-dated queries — see
-  the Roadmap. To inspect the current window run
+  `err("outside_calendar_window", …)` (HTTP 422 via REST) by default. Set
+  `KTMB_FORWARD_FALLBACK=1` to opt in to a KITS booking-site fallback for
+  forward-dated queries — see [Forward-dated schedules](#forward-dated-schedules)
+  above. To inspect the current window run
   `npx tsx scripts/inspect-schedules.ts YYYY-MM-DD`.
 
 Schedules, station search, Komuter timetables, and live vehicle positions
