@@ -4,6 +4,7 @@ import { KomuterService } from "./komuter/service.js";
 import { FareAvailabilityService } from "./schedules/fare-availability.js";
 import type { FareGetter } from "./schedules/fare-availability.js";
 import { SchedulesService } from "./schedules/service.js";
+import type { ForwardFallback } from "./schedules/service.js";
 import { StationsService } from "./stations/service.js";
 import { RealtimeService } from "./realtime/service.js";
 import type { RealtimeFetcher } from "./realtime/service.js";
@@ -17,6 +18,7 @@ export { parseStaticFeed } from "./gtfs/static-parser.js";
 export { fetchVehiclePositions } from "./gtfs/realtime.js";
 export { getAvailability as ktmbGetAvailability } from "./ktmb/client.js";
 export { parseDateMyt } from "./time/parse-date.js";
+export type { ForwardFallback } from "./schedules/service.js";
 
 export type Ktmb = {
   stations: StationsService;
@@ -32,6 +34,7 @@ export type CreateKtmbOptions = {
   realtimeFetcher: RealtimeFetcher;
   fareCacheTtlMs?: number;
   realtimeCacheTtlMs?: number;
+  forwardFallback?: ForwardFallback;
 };
 
 export const createKtmb = (opts: CreateKtmbOptions): Ktmb => {
@@ -47,7 +50,10 @@ export const createKtmb = (opts: CreateKtmbOptions): Ktmb => {
   });
   const ktmb: Ktmb & { swapStore: (s: GtfsStore) => void } = {
     stations: new StationsService(getStore),
-    schedules: new SchedulesService(getStore),
+    schedules: new SchedulesService(
+      getStore,
+      opts.forwardFallback ? { forwardFallback: opts.forwardFallback } : undefined,
+    ),
     fares: new FareAvailabilityService({ getter: opts.fareGetter, cache: fareCache }),
     komuter: new KomuterService(getStore),
     realtime: new RealtimeService({ fetcher: opts.realtimeFetcher, cache: realtimeCache }),

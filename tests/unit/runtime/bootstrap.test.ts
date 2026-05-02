@@ -247,3 +247,92 @@ describe("createKtmbRuntime KTMB_COOKIE plumbing", () => {
     }
   });
 });
+
+describe("createKtmbRuntime forward-dated fallback", () => {
+  it("activates KITS fallback when KTMB_FORWARD_FALLBACK=1 and date is past GTFS window", async () => {
+    server.use(
+      http.get(STATIC, () =>
+        new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        }),
+      ),
+      http.get(RT, () => new HttpResponse(new Uint8Array(), { status: 200 })),
+    );
+    const { readFileSync } = await import("node:fs");
+    const fix = (name: string) =>
+      readFileSync(new URL(`../../fixtures/ktmb/${name}`, import.meta.url), "utf8");
+    server.use(
+      http.get("https://online.ktmb.com.my/", () =>
+        HttpResponse.html(fix("home.html")),
+      ),
+      http.post("https://online.ktmb.com.my/Trip", () =>
+        HttpResponse.html(fix("trip-form.html")),
+      ),
+      http.post("https://online.ktmb.com.my/Trip/GetTripToken", () =>
+        HttpResponse.text(fix("trip-token.json"), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+      http.post("https://online.ktmb.com.my/Trip/Trip", () =>
+        HttpResponse.text(fix("trip-listing.json"), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+
+    process.env.KTMB_FORWARD_FALLBACK = "1";
+    try {
+      const rt = await createKtmbRuntime({
+        feedStaticUrl: STATIC,
+        feedRealtimeUrl: RT,
+        refreshIntervalMs: 0,
+      });
+      try {
+        const r = await rt.ktmb.schedules.listSchedulesAsync({
+          from: "KUL",
+          to: "BTW",
+          date: "2099-12-31",
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.data.length).toBeGreaterThan(0);
+        expect(r.data[0]!.bookingProvider).toBe("KTMB");
+      } finally {
+        rt.shutdown();
+      }
+    } finally {
+      delete process.env.KTMB_FORWARD_FALLBACK;
+    }
+  });
+
+  it("returns outside_calendar_window when KTMB_FORWARD_FALLBACK is unset", async () => {
+    server.use(
+      http.get(STATIC, () =>
+        new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        }),
+      ),
+      http.get(RT, () => new HttpResponse(new Uint8Array(), { status: 200 })),
+    );
+    delete process.env.KTMB_FORWARD_FALLBACK;
+    const rt = await createKtmbRuntime({
+      feedStaticUrl: STATIC,
+      feedRealtimeUrl: RT,
+      refreshIntervalMs: 0,
+    });
+    try {
+      const r = await rt.ktmb.schedules.listSchedulesAsync({
+        from: "KUL",
+        to: "BTW",
+        date: "2099-12-31",
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.error.code).toBe("outside_calendar_window");
+    } finally {
+      rt.shutdown();
+    }
+  });
+});
