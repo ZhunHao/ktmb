@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import { GtfsLoader } from "../../../../src/core/gtfs/loader.js";
@@ -77,5 +80,68 @@ describe("GtfsLoader", () => {
     const [a, b] = await Promise.all([loader.refresh(), loader.refresh()]);
     expect(a.ok && b.ok).toBe(true);
     expect(calls).toBe(2);
+  });
+});
+
+describe("GtfsLoader cache", () => {
+  const FEED = "https://test.invalid/cached-feed";
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "ktmb-loader-"));
+    return () => rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("uses the disk cache when a fresh entry exists", async () => {
+    let networkCalls = 0;
+    server.use(
+      http.get(FEED, () => {
+        networkCalls++;
+        return new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        });
+      }),
+    );
+    const a = new GtfsLoader(FEED, { cacheDir: dir, cacheMaxAgeMs: 60_000 });
+    const ra = await a.load();
+    expect(ra.ok).toBe(true);
+    expect(networkCalls).toBe(1);
+    const b = new GtfsLoader(FEED, { cacheDir: dir, cacheMaxAgeMs: 60_000 });
+    const rb = await b.load();
+    expect(rb.ok).toBe(true);
+    expect(networkCalls).toBe(1);
+  });
+
+  it("bypasses the cache on refresh()", async () => {
+    let networkCalls = 0;
+    server.use(
+      http.get(FEED, () => {
+        networkCalls++;
+        return new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        });
+      }),
+    );
+    const loader = new GtfsLoader(FEED, { cacheDir: dir, cacheMaxAgeMs: 60_000 });
+    await loader.load();
+    await loader.refresh();
+    expect(networkCalls).toBe(2);
+  });
+
+  it("falls back to network when cacheDir is unset", async () => {
+    let networkCalls = 0;
+    server.use(
+      http.get(FEED, () => {
+        networkCalls++;
+        return new HttpResponse(buildMiniFeed(), {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        });
+      }),
+    );
+    const loader = new GtfsLoader(FEED);
+    await loader.load();
+    expect(networkCalls).toBe(1);
   });
 });
