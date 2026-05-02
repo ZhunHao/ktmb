@@ -21,8 +21,12 @@ export const loadCachedFeed = async (
   } catch {
     return null;
   }
-  const ageMs = Date.now() - stats.mtimeMs;
-  if (ageMs > input.maxAgeMs) return null;
+  // Clamp ageMs to >= 0 because the filesystem may round mtime up to a value
+  // strictly greater than Date.now() captured just after the write, producing
+  // a spurious negative ageMs that would otherwise be treated as "always fresh".
+  // Use >= so maxAgeMs:0 reliably means "never use the cache".
+  const ageMs = Math.max(0, Date.now() - stats.mtimeMs);
+  if (ageMs >= input.maxAgeMs) return null;
   const buf = await readFile(path);
   return { bytes: new Uint8Array(buf), ageMs };
 };
