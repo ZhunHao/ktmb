@@ -83,20 +83,22 @@ npm link
 ```
 
 To consume the library from another local project, run `npm link` here, then
-`npm link ktmb` in the consumer.
+`npm link @zhun_hao/ktmb` in the consumer.
 
-Once published, the install path will be:
+Install from npm:
 
 ```bash
-npm i ktmb
-npx ktmb-mcp
-npx ktmb-api
+npm i @zhun_hao/ktmb
+npx --package=@zhun_hao/ktmb ktmb-mcp
+npx --package=@zhun_hao/ktmb ktmb-api
 ```
+
+(After global install — `npm i -g @zhun_hao/ktmb` — the `ktmb-mcp` and `ktmb-api` binaries are on PATH directly.)
 
 ## Library
 
 ```ts
-import { GtfsLoader, createKtmb, ktmbGetAvailability, fetchVehiclePositions } from "ktmb";
+import { GtfsLoader, createKtmb, ktmbGetAvailability, fetchVehiclePositions } from "@zhun_hao/ktmb";
 
 const loader = new GtfsLoader("https://api.data.gov.my/gtfs-static/ktmb");
 const r = await loader.load();
@@ -137,7 +139,7 @@ Configure in Claude Desktop / Claude Code:
 ```json
 {
   "mcpServers": {
-    "ktmb": { "command": "npx", "args": ["ktmb-mcp"] }
+    "ktmb": { "command": "npx", "args": ["--package=@zhun_hao/ktmb", "ktmb-mcp"] }
   }
 }
 ```
