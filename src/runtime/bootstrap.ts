@@ -25,7 +25,16 @@ export type Runtime = {
 const DEFAULT_REFRESH_MS = 6 * 60 * 60 * 1000;
 
 export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Runtime> => {
-  const loader = new GtfsLoader(opts.feedStaticUrl);
+  const cacheDir =
+    typeof process !== "undefined" ? process.env.KTMB_CACHE_DIR : undefined;
+  const cacheMaxAgeMs = (() => {
+    const raw = typeof process !== "undefined" ? process.env.KTMB_CACHE_MAX_AGE_MS : undefined;
+    return raw ? Number(raw) : undefined;
+  })();
+  const loader = new GtfsLoader(opts.feedStaticUrl, {
+    ...(cacheDir ? { cacheDir } : {}),
+    ...(cacheMaxAgeMs && Number.isFinite(cacheMaxAgeMs) ? { cacheMaxAgeMs } : {}),
+  });
   const initial = await loader.load(
     opts.retryDelaysMs !== undefined ? { retryDelaysMs: opts.retryDelaysMs } : {},
   );

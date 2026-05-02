@@ -336,3 +336,45 @@ describe("createKtmbRuntime forward-dated fallback", () => {
     }
   });
 });
+
+describe("createKtmbRuntime KTMB_CACHE_DIR plumbing", () => {
+  it("forwards KTMB_CACHE_DIR to GtfsLoader so a second runtime hits the cache", async () => {
+    const { mkdtempSync, rmSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = mkdtempSync(join(tmpdir(), "ktmb-rt-"));
+    try {
+      let calls = 0;
+      server.use(
+        http.get(STATIC, () => {
+          calls++;
+          return new HttpResponse(buildMiniFeed(), {
+            status: 200,
+            headers: { "content-type": "application/zip" },
+          });
+        }),
+        http.get(RT, () => new HttpResponse(new Uint8Array(), { status: 200 })),
+      );
+      process.env.KTMB_CACHE_DIR = dir;
+      try {
+        const a = await createKtmbRuntime({
+          feedStaticUrl: STATIC,
+          feedRealtimeUrl: RT,
+          refreshIntervalMs: 0,
+        });
+        a.shutdown();
+        const b = await createKtmbRuntime({
+          feedStaticUrl: STATIC,
+          feedRealtimeUrl: RT,
+          refreshIntervalMs: 0,
+        });
+        b.shutdown();
+        expect(calls).toBe(1);
+      } finally {
+        delete process.env.KTMB_CACHE_DIR;
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
