@@ -18,6 +18,9 @@ export type HttpHandle = {
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PATH = "/mcp";
 
+const normalizePath = (p: string): string =>
+  p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
+
 const writeNotFound = (res: ServerResponse): void => {
   res.statusCode = 404;
   res.setHeader("Content-Type", "application/json");
@@ -48,14 +51,14 @@ export const runHttp = async (
   // cast through Transport to satisfy `server.connect`.
   await server.connect(transport as unknown as Transport);
 
-  const path = opts.path ?? DEFAULT_PATH;
+  const path = normalizePath(opts.path ?? DEFAULT_PATH);
   const host = opts.host ?? DEFAULT_HOST;
 
   const httpServer: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const url = req.url ?? "";
     // Strip query string for path comparison.
     const qIndex = url.indexOf("?");
-    const reqPath = qIndex >= 0 ? url.slice(0, qIndex) : url;
+    const reqPath = normalizePath(qIndex >= 0 ? url.slice(0, qIndex) : url);
     if (reqPath !== path) {
       writeNotFound(res);
       return;
@@ -74,13 +77,19 @@ export const runHttp = async (
       const boundPort = typeof address === "object" && address ? address.port : opts.port;
       resolve({
         port: boundPort,
-        stop: () =>
-          new Promise<void>((r, rej) => {
+        stop: async () => {
+          try {
+            await transport.close?.();
+          } catch {
+            // best-effort: a failed transport.close() must not block httpServer.close()
+          }
+          await new Promise<void>((r, rej) => {
             httpServer.close((err) => {
               if (err) rej(err);
               else r();
             });
-          }),
+          });
+        },
       });
     });
   });
