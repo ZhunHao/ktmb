@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { parseStaticFeed } from "../../../../src/core/gtfs/static-parser.js";
 import { GtfsStore } from "../../../../src/core/gtfs/store.js";
+import { ok } from "../../../../src/core/result.js";
 import { SchedulesService } from "../../../../src/core/schedules/service.js";
+import type { TripListingRow } from "../../../../src/core/ktmb/parse-trip-listing.js";
 import { buildMiniFeed } from "../gtfs/_make-fixture.js";
 
 const make = () => {
@@ -64,5 +66,80 @@ describe("SchedulesService", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.error.code).toBe("outside_calendar_window");
+  });
+});
+
+const fakeStore = (windowEnd: string): GtfsStore =>
+  ({
+    isOutsideCalendarWindow: (d: string) => d > windowEnd,
+    calendarWindow: { startDate: "2026-01-01", endDate: windowEnd },
+    tripsRunningOn: () => [],
+    findRoute: () => undefined,
+    stopTimesForTrip: () => [],
+    listRoutes: () => [],
+    listStops: () => [],
+  }) as unknown as GtfsStore;
+
+const sampleRows: TripListingRow[] = [
+  {
+    trainNo: "9124",
+    service: "Platinum",
+    departure: "08:05",
+    arrival: "12:10",
+    durationMinutes: 245,
+    seatsAvailable: 230,
+    minFareMinor: 11200,
+    tripData: "",
+  },
+];
+
+describe("SchedulesService forward-dated fallback", () => {
+  it("falls through to KITS when date is past the GTFS calendar window", async () => {
+    const fallback = vi.fn().mockResolvedValue(ok(sampleRows));
+    const svc = new SchedulesService(() => fakeStore("2026-06-30"), {
+      forwardFallback: fallback,
+    });
+    const r = await svc.listSchedulesAsync({
+      from: "KUL",
+      to: "BTW",
+      date: "2026-08-15",
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data).toHaveLength(1);
+    expect(r.data[0]!.trainNo).toBe("9124");
+    expect(fallback).toHaveBeenCalledWith({
+      from: "KUL",
+      to: "BTW",
+      date: "2026-08-15",
+    });
+  });
+
+  it("returns outside_calendar_window when no fallback is configured", async () => {
+    const svc = new SchedulesService(() => fakeStore("2026-06-30"));
+    const r = await svc.listSchedulesAsync({
+      from: "KUL",
+      to: "BTW",
+      date: "2026-08-15",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.error.code).toBe("outside_calendar_window");
+  });
+
+  it("uses GTFS path when date is in window (does not call fallback)", async () => {
+    const fallback = vi.fn();
+    const svc = new SchedulesService(() => fakeStore("2026-12-31"), {
+      forwardFallback: fallback,
+    });
+    const r = await svc.listSchedulesAsync({
+      from: "KUL",
+      to: "BTW",
+      date: "2026-08-15",
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data).toEqual([]);
+    expect(fallback).not.toHaveBeenCalled();
   });
 });
