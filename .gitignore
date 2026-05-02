@@ -9,3 +9,4 @@ tests/fixtures/captured
 site/data
 .deno/
 deno.lock
+.claude/
