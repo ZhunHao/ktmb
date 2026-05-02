@@ -620,6 +620,27 @@
   // GitHub Pages the endpoint 404s and we silently keep the snapshot.
   const LIVE_POLL_MS = 6_000;
   let liveMode = false;
+  let pollHandle = null;
+  let pollInFlight = false;
+
+  function startPolling() {
+    if (pollHandle != null) return;
+    pollHandle = setInterval(pollLiveVehicles, LIVE_POLL_MS);
+    setLiveDotPaused(false);
+  }
+
+  function stopPolling() {
+    if (pollHandle == null) return;
+    clearInterval(pollHandle);
+    pollHandle = null;
+    setLiveDotPaused(true);
+  }
+
+  function setLiveDotPaused(paused) {
+    const dot = document.querySelector('.map-counter .live-dot');
+    if (!dot) return;
+    dot.classList.toggle('paused', paused);
+  }
 
   // Linear lat/lon → 800x480 viewBox projection. Same coefficients as the
   // build-snapshot script so live and snapshot dots line up.
@@ -646,6 +667,8 @@
   }
 
   async function pollLiveVehicles() {
+    if (pollInFlight) return;
+    pollInFlight = true;
     try {
       const res = await fetch('/v1/realtime/vehicles', { cache: 'no-store' });
       if (!res.ok) throw new Error(String(res.status));
@@ -660,9 +683,13 @@
       if (!liveMode) {
         liveMode = true;
         markLiveModeActive(body);
+        const btn = $('#map-refresh');
+        if (btn) btn.hidden = false;
       }
     } catch {
       // Endpoint missing or unreachable → silently retain snapshot.
+    } finally {
+      pollInFlight = false;
     }
   }
 
@@ -806,7 +833,27 @@
     renderSnapshotPill();
     setText('#vehicle-count', String(VEHICLES.length));
     void pollLiveVehicles();
-    setInterval(pollLiveVehicles, LIVE_POLL_MS);
+    startPolling();
+
+    // Pause polling when the tab is backgrounded; resume + immediate poll on focus.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        stopPolling();
+      } else {
+        void pollLiveVehicles();
+        startPolling();
+      }
+    });
+
+    // Manual refresh button (revealed once live API confirms reachable).
+    const refreshBtn = $('#map-refresh');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        refreshBtn.classList.add('spinning');
+        await pollLiveVehicles();
+        setTimeout(() => refreshBtn.classList.remove('spinning'), 600);
+      });
+    }
 
     // Code tabs
     wireCodeTabs();

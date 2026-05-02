@@ -578,6 +578,24 @@
     width: 6px; height: 6px; border-radius: 50%; background: #34c759;
     animation: pulse 2.4s ease-out infinite;
   }
+  .map-counter .live-dot.paused {
+    background: #ff9500; animation: none;
+  }
+
+  .map-refresh {
+    position: absolute; right: 16px; top: 56px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,0,0,0.78); color: var(--on-dark);
+    backdrop-filter: blur(10px);
+    border: 0; cursor: pointer; padding: 0;
+    font: 400 16px/1 var(--text);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .map-refresh:hover { background: rgba(0,0,0,0.92); }
+  .map-refresh:active { transform: scale(0.95); }
+  .map-refresh.spinning { animation: spin 0.6s linear; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
   .vehicle-detail {
     background: var(--pearl);
@@ -1006,6 +1024,8 @@
           <span class="live-dot"></span>
           <span class="count" id="vehicle-count">0</span> vehicles
         </div>
+
+        <button type="button" id="map-refresh" class="map-refresh" hidden aria-label="Refresh live vehicles" title="Refresh now">↻</button>
 
         <div id="vehicle-layer"></div>
       </div>
