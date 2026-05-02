@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Ktmb } from "../core/index.js";
 import {
   GetFareAvailabilityInput,
@@ -61,7 +60,5 @@ export const buildMcpServer = (ktmb: Ktmb): McpServer => {
   return server;
 };
 
-export const runStdio = async (server: McpServer): Promise<void> => {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-};
+export { runStdio } from "./transports/stdio.js";
+export { runHttp, type RunHttpOptions, type HttpHandle } from "./transports/http.js";
