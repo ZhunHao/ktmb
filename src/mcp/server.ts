@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { VERSION } from "../core/config.js";
 import type { Ktmb } from "../core/index.js";
 import {
   GetFareAvailabilityInput,
@@ -20,7 +21,7 @@ import { ListSchedulesInput, listSchedulesHandler } from "./tools/list-schedules
 import { SearchStationsInput, searchStationsHandler } from "./tools/search-stations.js";
 
 export const buildMcpServer = (ktmb: Ktmb): McpServer => {
-  const server = new McpServer({ name: "ktmb", version: "0.3.0" });
+  const server = new McpServer({ name: "ktmb", version: VERSION });
   server.tool(
     "search_stations",
     "Fuzzy-search KTMB stations by code or name",
