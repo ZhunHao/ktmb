@@ -593,11 +593,6 @@
       },
     ).addTo(map);
 
-    // Scroll-wheel zoom only after the user clicks/focuses the map — avoids
-    // hijacking page scroll on the marketing surface.
-    map.on('focus', () => map.scrollWheelZoom.enable());
-    map.on('blur', () => map.scrollWheelZoom.disable());
-
     LEAFLET_MAP = map;
   }
 
