@@ -874,7 +874,7 @@
     </div>
     <div class="install">
       <span class="prompt">$</span>
-      <span><span style="color:var(--ink-muted-48)">npm i </span>ktmb</span>
+      <span><span style="color:var(--ink-muted-48)">npm i </span>@zhun_hao/ktmb</span>
       <button class="copy" onclick="copyInstall(this)">Copy</button>
     </div>
 
@@ -1074,14 +1074,14 @@
 
     <div style="margin-top: 32px">
       <div class="code-tabs">
-        <button class="code-tab active" data-tab="lib">Library</button>
-        <button class="code-tab" data-tab="rest">REST</button>
-        <button class="code-tab" data-tab="mcp">MCP</button>
+        <button class="code-tab active" id="lib" data-tab="lib">Library</button>
+        <button class="code-tab" id="rest" data-tab="rest">REST</button>
+        <button class="code-tab" id="mcp" data-tab="mcp">MCP</button>
       </div>
 
       <pre class="code-block" id="code-lib">
 <span class="k">import</span> { GtfsLoader, createKtmb, ktmbGetAvailability,
-         fetchVehiclePositions } <span class="k">from</span> <span class="s">"ktmb"</span>;
+         fetchVehiclePositions } <span class="k">from</span> <span class="s">"@zhun_hao/ktmb"</span>;
 
 <span class="c">// Load the GTFS Static feed once at boot.</span>
 <span class="k">const</span> <span class="id">loader</span> = <span class="k">new</span> <span class="ty">GtfsLoader</span>(
@@ -1106,7 +1106,7 @@
 
       <pre class="code-block" id="code-rest" hidden>
 <span class="c"># Start the server</span>
-<span class="id">$</span> <span class="fn">npx</span> ktmb-api          <span class="c"># PORT defaults to 8787</span>
+<span class="id">$</span> <span class="fn">npx</span> --package=@zhun_hao/ktmb ktmb-api          <span class="c"># PORT defaults to 8787</span>
 
 <span class="c"># Search stations (fuzzy, returns best matches)</span>
 <span class="id">$</span> <span class="fn">curl</span> <span class="s">"localhost:8787/v1/stations?q=Subang"</span>
@@ -1129,7 +1129,7 @@
   <span class="k">"mcpServers"</span>: {
     <span class="k">"ktmb"</span>: {
       <span class="k">"command"</span>: <span class="s">"npx"</span>,
-      <span class="k">"args"</span>: [<span class="s">"ktmb-mcp"</span>]
+      <span class="k">"args"</span>: [<span class="s">"--package=@zhun_hao/ktmb"</span>, <span class="s">"ktmb-mcp"</span>]
     }
   }
 }

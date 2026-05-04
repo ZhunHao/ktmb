@@ -111,7 +111,7 @@
 
   // Hero install button
   window.copyInstall = function (btn) {
-    if (navigator.clipboard) navigator.clipboard.writeText('npm i ktmb');
+    if (navigator.clipboard) navigator.clipboard.writeText('npm i @zhun_hao/ktmb');
     const orig = btn.textContent;
     btn.textContent = 'Copied';
     setTimeout(() => (btn.textContent = orig), 1200);
@@ -778,18 +778,26 @@
   }
 
   // ---- Code tabs ----
+  function selectCodeTab(id) {
+    if (!['lib', 'rest', 'mcp'].includes(id)) return;
+    $$('.code-tab').forEach((t) => {
+      t.classList.toggle('active', t.dataset.tab === id);
+    });
+    ['lib', 'rest', 'mcp'].forEach((k) => {
+      const node = $(`#code-${k}`);
+      if (node) node.hidden = k !== id;
+    });
+  }
   function wireCodeTabs() {
     $$('.code-tab').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        $$('.code-tab').forEach((t) => t.classList.remove('active'));
-        tab.classList.add('active');
-        const id = tab.dataset.tab;
-        ['lib', 'rest', 'mcp'].forEach((k) => {
-          const node = $(`#code-${k}`);
-          if (node) node.hidden = k !== id;
-        });
-      });
+      tab.addEventListener('click', () => selectCodeTab(tab.dataset.tab));
     });
+    const syncFromHash = () => {
+      const hash = location.hash.slice(1);
+      if (['lib', 'rest', 'mcp'].includes(hash)) selectCodeTab(hash);
+    };
+    window.addEventListener('hashchange', syncFromHash);
+    syncFromHash();
   }
 
   // ---- Helpers ----
