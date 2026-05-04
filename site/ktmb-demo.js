@@ -566,22 +566,24 @@
     const node = $('#leaflet-map');
     if (!node) return;
 
+    // Fully non-interactive: the map is illustrative for the demo, not a
+    // tool for exploration. Disabling every interaction guarantees that
+    // wheel/touch/trackpad gestures over the map pass through to the page,
+    // and the map can never pan inside its frame while the user thinks
+    // they're scrolling. Marker clicks still fire because click events
+    // are independent of the drag/zoom handlers.
     const map = L.map(node, {
       center: [3.95, 102.1],
       zoom: 7,
-      minZoom: 6,
-      maxZoom: 14,
-      zoomControl: false,
-      scrollWheelZoom: false,
       attributionControl: true,
-      maxBounds: [
-        [0.5, 99.0],
-        [7.5, 105.5],
-      ],
-      maxBoundsViscosity: 1.0,
+      zoomControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      touchZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
     });
-
-    L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
     L.tileLayer(
       'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',

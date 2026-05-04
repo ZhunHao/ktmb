@@ -522,15 +522,7 @@
     font-family: var(--text);
     background: var(--parchment);
     outline: none;
-  }
-  /* Leaflet's default touch-action: none on the map container blocks
-     trackpad/touch page scroll passing through. Re-enable two-axis pan so
-     scrolling over the map always advances the page. Mouse-drag still pans
-     the map on desktop (Leaflet uses mouse events, not touch). */
-  .leaflet-container,
-  .leaflet-container.leaflet-touch-drag,
-  .leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
-    touch-action: pan-x pan-y !important;
+    cursor: default; /* map is non-interactive — no grab cursor */
   }
   .leaflet-control-attribution {
     font: 400 10px/1.4 var(--text) !important;
@@ -544,26 +536,6 @@
   }
   .leaflet-control-attribution a { color: var(--primary) !important; text-decoration: none; }
   .leaflet-control-attribution a:hover { text-decoration: underline; }
-  .leaflet-control-zoom {
-    border: 1px solid var(--hairline) !important;
-    border-radius: 11px !important;
-    overflow: hidden;
-    box-shadow: none !important;
-    margin: 16px !important;
-  }
-  .leaflet-control-zoom a {
-    background: rgba(255,255,255,0.92) !important;
-    color: var(--ink) !important;
-    border-bottom: 1px solid var(--hairline) !important;
-    font: 300 18px/1 var(--text) !important;
-    width: 32px !important; height: 32px !important; line-height: 32px !important;
-  }
-  .leaflet-control-zoom a:last-child { border-bottom: 0 !important; }
-  .leaflet-control-zoom a:hover { background: var(--canvas) !important; }
-  .leaflet-control-zoom a.leaflet-disabled {
-    background: rgba(255,255,255,0.7) !important;
-    color: var(--ink-muted-48) !important;
-  }
 
   /* Vehicle dots — same visual language, just placed by Leaflet now. */
   .vehicle-icon { background: transparent; border: 0; }
