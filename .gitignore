@@ -10,3 +10,5 @@ site/data
 .deno/
 deno.lock
 .claude/
+.playwright-mcp/
+realtime-tile*.png
