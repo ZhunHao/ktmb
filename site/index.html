@@ -866,34 +866,35 @@
       <div class="body">
         <div class="map">
           <span class="label">PENINSULAR ML · GTFS STATIC</span>
-          <svg viewBox="0 0 320 260" preserveAspectRatio="xMidYMid meet">
-            <!-- ETS spine -->
-            <path d="M 170 20 L 168 80 L 150 130 L 145 175 L 140 220 L 90 245" stroke="#0066cc" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <!-- Komuter loop around KL -->
-            <path d="M 145 175 L 175 178 L 200 165 L 215 145 L 200 120 L 170 110 L 150 130" stroke="#34c759" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-            <!-- East coast intercity -->
-            <path d="M 150 130 L 220 145 L 270 175 L 290 215" stroke="#ff9500" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="4 4"/>
-            <!-- Shuttle Tebrau (south) -->
-            <path d="M 90 245 L 70 260" stroke="#af52de" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <svg viewBox="0 0 320 260" preserveAspectRatio="xMidYMid meet" aria-label="KTMB network — Peninsular Malaysia">
+            <!-- ETS / Intercity spine: Padang Besar → Butterworth → Ipoh → KL Sentral → Gemas → JB Sentral -->
+            <path d="M 85 17 L 88 72 L 119 106 L 146 170 L 187 194 L 238 242" stroke="#0066cc" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- East Coast Line: Gemas → Mentakab → Kuala Lipis → Gua Musang → Kuala Krai → Tumpat -->
+            <path d="M 187 194 L 175 155 L 162 124 L 159 94 L 168 66 L 168 37" stroke="#ff9500" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4"/>
+            <!-- Klang Valley Komuter (Pel. Klang ↔ KL Sentral ↔ Batu Caves spur) -->
+            <path d="M 133 176 L 146 170 L 144 158" stroke="#34c759" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Shuttle Tebrau (JB Sentral → Woodlands) -->
+            <path d="M 238 242 L 247 250" stroke="#af52de" stroke-width="2.5" fill="none" stroke-linecap="round"/>
             <!-- Stations -->
             <g fill="#fff" stroke="#1d1d1f" stroke-width="1.4">
-              <circle cx="170" cy="20" r="3.5"/>
-              <circle cx="168" cy="80" r="3.5"/>
-              <circle cx="150" cy="130" r="4"/>
-              <circle cx="145" cy="175" r="4.5"/>
-              <circle cx="140" cy="220" r="3.5"/>
-              <circle cx="90" cy="245" r="4"/>
-              <circle cx="270" cy="175" r="3.5"/>
-              <circle cx="290" cy="215" r="3.5"/>
+              <circle cx="85" cy="17" r="3.5"/>
+              <circle cx="88" cy="72" r="3.5"/>
+              <circle cx="119" cy="106" r="3.5"/>
+              <circle cx="146" cy="170" r="4.5"/>
+              <circle cx="159" cy="94" r="3"/>
+              <circle cx="168" cy="37" r="3.5"/>
+              <circle cx="187" cy="194" r="4.5"/>
+              <circle cx="238" cy="242" r="3.5"/>
             </g>
             <g font-family="SF Pro Text, system-ui" font-size="9" fill="#7a7a7a">
-              <text x="178" y="22">Padang Besar</text>
-              <text x="176" y="84">Butterworth</text>
-              <text x="158" y="132">Ipoh</text>
-              <text x="153" y="178">KL Sentral</text>
-              <text x="148" y="223">Gemas</text>
-              <text x="20" y="248">JB Sentral</text>
-              <text x="222" y="178">Kuantan</text>
+              <text x="92" y="20">Padang Besar</text>
+              <text x="95" y="75">Butterworth</text>
+              <text x="125" y="109">Ipoh</text>
+              <text x="140" y="170" text-anchor="end">KL Sentral</text>
+              <text x="167" y="97">Gua Musang</text>
+              <text x="176" y="40">Tumpat</text>
+              <text x="185" y="207" text-anchor="end">Gemas</text>
+              <text x="232" y="245" text-anchor="end">JB Sentral</text>
             </g>
           </svg>
         </div>
