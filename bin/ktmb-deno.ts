@@ -7,7 +7,9 @@
  * Deployed by `.github/workflows/deno-deploy.yml` (and Deno Deploy's GitHub
  * source integration).
  */
-import { serveStatic } from "npm:hono@4.12.15/deno";
+// Keep this version in sync with the `hono` entry in package.json — Deno
+// resolves npm: specifiers independently of the pnpm lockfile.
+import { serveStatic } from "npm:hono@4.12.16/deno";
 
 // Imports resolve directly to TypeScript source under `src/` via Deno's
 // sloppy-imports unstable feature (see deno.json). This avoids depending on

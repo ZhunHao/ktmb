@@ -1,12 +1,12 @@
 /**
- * Build-time snapshot generator for the GitHub Pages demo.
+ * Build-time snapshot generator for the public demo.
  *
  * Loads the live GTFS-Static and GTFS-Realtime feeds via the ktmb library,
  * pre-computes everything the static demo needs, and writes the result as
- * JSON files under `site/data/`. Intended to be run by the Pages deploy
- * workflow on a daily cron — see `.github/workflows/pages.yml`.
+ * JSON files under `site/data/`. Run by the Deno Deploy build step — see
+ * the `deploy.build` field in `deno.json`.
  *
- * Local usage: `npm run snapshot`
+ * Local usage: `pnpm snapshot`
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
