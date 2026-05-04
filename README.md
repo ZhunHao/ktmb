@@ -2,7 +2,7 @@
 
 Read-only TypeScript library, REST API, and MCP server for KTMB rail data.
 
-> **Live demo:** <https://ktmb-demo-eanec8c6hz0m.zhunhao.deno.net/> — deployed to Deno Deploy². Both the live REST API at `/v1/*` and the static one-pager at `/` ship from the same origin. The realtime tile polls `/v1/realtime/vehicles` every 6 s for actually-live vehicle positions. See [Demo](#demo) for the deploy pipeline.
+> **Live demo:** <https://ktmb-demo.zhunhao.deno.net/> — deployed to Deno Deploy². Both the live REST API at `/v1/*` and the static one-pager at `/` ship from the same origin. The realtime tile polls `/v1/realtime/vehicles` every 6 s for actually-live vehicle positions. See [Demo](#demo) for the deploy pipeline.
 
 > **Unofficial.** Not affiliated with Keretapi Tanah Melayu Berhad.
 > Schedules and station data come from Malaysia's Open Data Portal
