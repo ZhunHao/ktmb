@@ -523,6 +523,15 @@
     background: var(--parchment);
     outline: none;
   }
+  /* Leaflet's default touch-action: none on the map container blocks
+     trackpad/touch page scroll passing through. Re-enable two-axis pan so
+     scrolling over the map always advances the page. Mouse-drag still pans
+     the map on desktop (Leaflet uses mouse events, not touch). */
+  .leaflet-container,
+  .leaflet-container.leaflet-touch-drag,
+  .leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+    touch-action: pan-x pan-y !important;
+  }
   .leaflet-control-attribution {
     font: 400 10px/1.4 var(--text) !important;
     letter-spacing: -0.08px;
