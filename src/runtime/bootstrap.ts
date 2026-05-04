@@ -1,9 +1,9 @@
 import { GtfsLoader } from "../core/gtfs/loader.js";
 import { fetchVehiclePositions } from "../core/gtfs/realtime.js";
-import type { GtfsStore } from "../core/gtfs/store.js";
 import { createKtmb, ktmbGetAvailability, type Ktmb } from "../core/index.js";
 import { searchKitsByGtfsCodes } from "../core/ktmb/search-by-gtfs.js";
 import type { ForwardFallback } from "../core/schedules/service.js";
+import { getEnv, getEnvFlag, getEnvNumber } from "./env.js";
 import { createLogger, type Logger } from "./logger.js";
 
 export type CreateRuntimeOptions = {
@@ -23,15 +23,11 @@ export type Runtime = {
 const DEFAULT_REFRESH_MS = 6 * 60 * 60 * 1000;
 
 export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Runtime> => {
-  const cacheDir =
-    typeof process !== "undefined" ? process.env.KTMB_CACHE_DIR : undefined;
-  const cacheMaxAgeMs = (() => {
-    const raw = typeof process !== "undefined" ? process.env.KTMB_CACHE_MAX_AGE_MS : undefined;
-    return raw ? Number(raw) : undefined;
-  })();
+  const cacheDir = getEnv("KTMB_CACHE_DIR");
+  const cacheMaxAgeMs = getEnvNumber("KTMB_CACHE_MAX_AGE_MS");
   const loader = new GtfsLoader(opts.feedStaticUrl, {
     ...(cacheDir ? { cacheDir } : {}),
-    ...(cacheMaxAgeMs && Number.isFinite(cacheMaxAgeMs) ? { cacheMaxAgeMs } : {}),
+    ...(cacheMaxAgeMs !== undefined ? { cacheMaxAgeMs } : {}),
   });
   const initial = await loader.load(
     opts.retryDelaysMs !== undefined ? { retryDelaysMs: opts.retryDelaysMs } : {},
@@ -41,16 +37,12 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
       `GTFS load failed: ${initial.error.code} ${initial.error.message}`,
     );
   }
-  const cookieFromEnv =
-    typeof process !== "undefined" ? process.env.KTMB_COOKIE : undefined;
+  const cookieFromEnv = getEnv("KTMB_COOKIE");
   const fareGetter = cookieFromEnv
     ? (input: Parameters<typeof ktmbGetAvailability>[0]) =>
         ktmbGetAvailability(input, { cookie: cookieFromEnv })
     : ktmbGetAvailability;
-  const forwardFallbackEnabled =
-    typeof process !== "undefined" &&
-    process.env.KTMB_FORWARD_FALLBACK === "1";
-  const forwardFallback: ForwardFallback | undefined = forwardFallbackEnabled
+  const forwardFallback: ForwardFallback | undefined = getEnvFlag("KTMB_FORWARD_FALLBACK")
     ? async (input) => {
         const r = await searchKitsByGtfsCodes(
           input,
@@ -65,11 +57,10 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
     realtimeFetcher: () => fetchVehiclePositions(opts.feedRealtimeUrl),
     ...(forwardFallback ? { forwardFallback } : {}),
   });
-  const swap = (ktmb as Ktmb & { swapStore: (s: GtfsStore) => void }).swapStore;
   const logger = opts.logger ?? createLogger();
 
   const interval = opts.refreshIntervalMs ?? DEFAULT_REFRESH_MS;
-  let timer: NodeJS.Timeout | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
 
   const scheduleNext = (): void => {
@@ -82,7 +73,7 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
         .then((rr) => {
           if (stopped) return;
           if (rr.ok) {
-            swap(rr.data);
+            ktmb.swapStore(rr.data);
           } else {
             logger.error("[ktmb] refresh failed", rr.error);
           }
@@ -92,10 +83,23 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
           logger.error("[ktmb] refresh threw", e);
         })
         .finally(() => {
-          if (!stopped) setImmediate(() => scheduleNext());
+          // Use the globalThis.setImmediate so vitest's fake-timer patch
+          // applies to it. Deno provides setImmediate at runtime but doesn't
+          // type it on its own, so we read through globalThis. queueMicrotask
+          // is wrong here: microtasks run inside the current fake-time
+          // window and would re-arm a timer the test then flushes.
+          if (!stopped) {
+            (
+              globalThis as unknown as {
+                setImmediate: (cb: () => void) => void;
+              }
+            ).setImmediate(() => scheduleNext());
+          }
         });
     }, interval);
-    if (timer.unref) timer.unref();
+    if (typeof timer === "object" && timer && "unref" in timer) {
+      (timer as { unref: () => void }).unref();
+    }
   };
 
   if (interval > 0) {

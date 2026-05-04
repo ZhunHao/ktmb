@@ -45,10 +45,12 @@ export const runHttp = async (
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
   });
-  // SDK 1.29 typings: StreamableHTTPServerTransport's onclose/onerror getters are
-  // `(() => void) | undefined`, which collide with Transport's optional-property
-  // shape under `exactOptionalPropertyTypes`. The runtime behaviour is correct;
-  // cast through Transport to satisfy `server.connect`.
+  // SDK 1.29 ships `StreamableHTTPServerTransport` with onclose/onerror as
+  // explicit getter/setter pairs of `(() => void) | undefined`, while
+  // `Transport` declares them as `?: () => void`. Under
+  // `exactOptionalPropertyTypes` those shapes are not structurally
+  // assignable, so a direct cast is rejected. The runtime contract is fine —
+  // route through `unknown` so future SDK type fixes don't get masked.
   await server.connect(transport as unknown as Transport);
 
   const path = normalizePath(opts.path ?? DEFAULT_PATH);

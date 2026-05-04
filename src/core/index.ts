@@ -45,6 +45,12 @@ export type Ktmb = {
   fares: FareAvailabilityService;
   komuter: KomuterService;
   realtime: RealtimeService;
+  /**
+   * Hot-swap the underlying GTFS store. Wired by long-running runtimes that
+   * refresh the feed in place (see `runtime/bootstrap.ts`). Most callers
+   * should never invoke this.
+   */
+  swapStore: (store: GtfsStore) => void;
 };
 
 export type CreateKtmbOptions = {
@@ -67,7 +73,7 @@ export const createKtmb = (opts: CreateKtmbOptions): Ktmb => {
     max: 1,
     ttlMs: opts.realtimeCacheTtlMs ?? 15_000,
   });
-  const ktmb: Ktmb & { swapStore: (s: GtfsStore) => void } = {
+  return {
     stations: new StationsService(getStore),
     schedules: new SchedulesService(
       getStore,
@@ -80,5 +86,4 @@ export const createKtmb = (opts: CreateKtmbOptions): Ktmb => {
       store = s;
     },
   };
-  return ktmb;
 };

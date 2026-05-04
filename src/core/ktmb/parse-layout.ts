@@ -57,7 +57,8 @@ export const parseLayout = (body: string): Result<ParsedLayout> => {
   const currency = data.Currency === "SGD" ? "SGD" : "MYR";
 
   // Group available seats by ServiceType (Business/Standard/...). Track min
-  // price per group. Skip OKU. Skip filler/blocked (Status===5 or Price===0).
+  // price per group. Skip OKU. Skip rows with no ServiceType or zero Price
+  // (filler/blocked seats KITS leaves in the grid).
   const groups = new Map<string, { minPriceMinor: number; seats: number }>();
   let oku = 0;
   for (const coach of data.Coaches) {
