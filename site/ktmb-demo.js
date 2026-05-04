@@ -792,12 +792,21 @@
     $$('.code-tab').forEach((tab) => {
       tab.addEventListener('click', () => selectCodeTab(tab.dataset.tab));
     });
-    const syncFromHash = () => {
-      const hash = location.hash.slice(1);
-      if (['lib', 'rest', 'mcp'].includes(hash)) selectCodeTab(hash);
-    };
-    window.addEventListener('hashchange', syncFromHash);
-    syncFromHash();
+    // Any link pointing at a code-tab anchor (#lib / #rest / #mcp) should
+    // both scroll AND switch the tab. We delegate at document level so
+    // we cover the global nav, sub-nav, and footer in one shot, and we
+    // don't depend on hashchange firing (it doesn't, when the hash is
+    // already set to the same value).
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[href]');
+      if (!link) return;
+      const href = link.getAttribute('href') || '';
+      if (!href.startsWith('#')) return;
+      const id = href.slice(1);
+      if (['lib', 'rest', 'mcp'].includes(id)) selectCodeTab(id);
+    });
+    const hash = location.hash.slice(1);
+    if (['lib', 'rest', 'mcp'].includes(hash)) selectCodeTab(hash);
   }
 
   // ---- Helpers ----
