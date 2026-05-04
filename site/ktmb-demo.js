@@ -566,24 +566,28 @@
     const node = $('#leaflet-map');
     if (!node) return;
 
-    // Fully non-interactive: the map is illustrative for the demo, not a
-    // tool for exploration. Disabling every interaction guarantees that
-    // wheel/touch/trackpad gestures over the map pass through to the page,
-    // and the map can never pan inside its frame while the user thinks
-    // they're scrolling. Marker clicks still fire because click events
-    // are independent of the drag/zoom handlers.
+    // gestureHandling delegates the scroll-trap problem to a plugin that
+    // implements the Google-Maps pattern: ⌘/Ctrl + wheel to zoom on
+    // desktop, two-finger pan on touch. Plain wheel and one-finger swipe
+    // pass through to the page; the plugin shows a "Use ⌘ + scroll to
+    // zoom the map" overlay on the first attempt to scroll-zoom without
+    // the modifier. Loaded as a CDN script in index.html.
     const map = L.map(node, {
       center: [3.95, 102.1],
       zoom: 7,
+      minZoom: 6,
+      maxZoom: 14,
       attributionControl: true,
       zoomControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      touchZoom: false,
-      doubleClickZoom: false,
-      boxZoom: false,
-      keyboard: false,
+      gestureHandling: true,
+      maxBounds: [
+        [0.5, 99.0],
+        [7.5, 105.5],
+      ],
+      maxBoundsViscosity: 1.0,
     });
+
+    L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
     L.tileLayer(
       'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
