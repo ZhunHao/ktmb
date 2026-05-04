@@ -107,6 +107,7 @@ const trains = ktmb.schedules.listSchedules({ from: "KUL", to: "BTW", date: "202
 ## REST endpoints
 
 ```
+GET /healthz
 GET /v1/stations?q=KL
 GET /v1/stations/:id
 GET /v1/schedules?from=…&to=…&date=…
@@ -117,6 +118,9 @@ GET /v1/realtime/vehicles?route=…
 ```
 
 All responses use `{ ok: true, data }` or `{ ok: false, error: { code, message } }`.
+Error codes map to HTTP status as: `invalid_input` → 400, `not_found` → 404,
+`outside_calendar_window` → 422, `rate_limited` → 429, `internal_error` → 500,
+`upstream_error` / `parse_error` → 502.
 
 ## MCP tools
 

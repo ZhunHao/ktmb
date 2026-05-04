@@ -6,6 +6,24 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Unhandled REST API errors now return `internal_error` (HTTP 500)
+  instead of being conflated with `upstream_error` (HTTP 502).
+  `upstream_error` is reserved for genuine upstream failures (KITS,
+  GTFS feed). Clients that branch on the error code or status will see
+  500 in places that previously returned 502.
+
+### Refactored
+
+- `VERSION` and the outbound `User-Agent` are now sourced from
+  `package.json` via `src/core/config.ts` — no more duplicate version
+  strings.
+- Per-origin request queues are evicted lazily after 5 minutes idle
+  (no module-level `setTimeout`, which previously interfered with
+  consumers that mock timers in tests). `drainAll()` is exposed
+  internally for graceful shutdown.
+
 ## [0.3.0] - 2026-05-02
 
 ### Added

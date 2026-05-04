@@ -15,8 +15,9 @@ pnpm test
 pnpm build
 ```
 
-Use Node 22 (see `.nvmrc`). Lower versions fail at install time —
-`undici@8.1.0` declares `engines.node >=22.19`.
+Use Node 22 (see `.nvmrc`). `package.json` declares `engines.node >=22.19`
+because the toolchain (`tsup`, `tsgo`, `vitest@4`) targets Node 22. CI runs
+on Node 22 and Node 24.
 
 ## Workflow
 
@@ -38,19 +39,24 @@ Use Node 22 (see `.nvmrc`). Lower versions fail at install time —
 `data.gov.my` feeds. Set the env var locally before running if you're
 touching the GTFS adapter or the route classifier.
 
-## Demo (GitHub Pages site)
+## Demo (Deno Deploy)
 
-The static demo lives under `site/` and is built from real GTFS data
-via `pnpm snapshot`. To preview locally:
+The one-page demo under `site/` and the live REST API at `/v1/*` ship
+from the same origin on **Deno Deploy²**. The entrypoint is
+[`bin/ktmb-deno.ts`](bin/ktmb-deno.ts), driven by [`deno.json`](deno.json).
+Deno Deploy's GitHub source integration auto-builds and deploys on
+every push to `main` — no GitHub Actions workflow.
+
+To preview locally:
 
 ```bash
+pnpm install
 pnpm snapshot                   # writes site/data/*.json (gitignored)
-npx serve site                  # or any static server
+deno task deploy:dev            # serves on http://localhost:8000
 ```
 
-CI's `Deploy demo to GitHub Pages` workflow re-runs the snapshot and
-redeploys the site on every push to `site/**` and on a daily cron.
-See [README.md#demo](README.md#demo).
+`site/data/` is gitignored — `pnpm snapshot` (or the Deno Deploy build
+step) re-creates it. See [README.md#demo](README.md#demo).
 
 ## Releases
 
