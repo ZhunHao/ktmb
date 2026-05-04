@@ -51,12 +51,24 @@ describe("kitsRowsToSchedules", () => {
         { ...sampleRows[0]!, service: "Express", trainNo: "9002" },
         { ...sampleRows[0]!, service: "Gold", trainNo: "9003" },
         { ...sampleRows[0]!, service: "Intercity", trainNo: "9004" },
+        { ...sampleRows[0]!, service: "Shuttle Tebrau", trainNo: "9005" },
+        { ...sampleRows[0]!, service: "Tebrau", trainNo: "9006" },
+        { ...sampleRows[0]!, service: "Intercity Shuttle", trainNo: "9007" },
       ],
       date: "2026-08-15",
       fromCode: "KUL",
       toCode: "BTW",
     });
-    expect(out.map((s) => s.service)).toEqual(["ETS", "ETS", "ETS", "Intercity"]);
+    expect(out.map((s) => s.service)).toEqual([
+      "ETS",
+      "ETS",
+      "ETS",
+      "Intercity",
+      "ShuttleTebrau",
+      "ShuttleTebrau",
+      // "Intercity Shuttle" must classify as Intercity (matches GTFS classifier)
+      "Intercity",
+    ]);
   });
 
   it("handles overnight arrival markers like '00:20 (+1)'", () => {
@@ -67,6 +79,26 @@ describe("kitsRowsToSchedules", () => {
           trainNo: "9138",
           departure: "20:15",
           arrival: "00:20 (+1)",
+          durationMinutes: 245,
+        },
+      ],
+      date: "2026-08-15",
+      fromCode: "KUL",
+      toCode: "BTW",
+    });
+    expect(out[0]!.to.arrival).toBe("2026-08-16T00:20:00+08:00");
+  });
+
+  it("handles overnight arrival markers without parens ('00:20 +1')", () => {
+    // cheerio's `.text()` flattens inline `<span>+1</span>` badges with the
+    // surrounding whitespace, so the parsed arrival may arrive without parens.
+    const out = kitsRowsToSchedules({
+      rows: [
+        {
+          ...sampleRows[0]!,
+          trainNo: "9138",
+          departure: "20:15",
+          arrival: "00:20 +1",
           durationMinutes: 245,
         },
       ],

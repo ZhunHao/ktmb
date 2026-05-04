@@ -30,7 +30,7 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       hono:
-        specifier: ^4.12.16
+        specifier: 4.12.16
         version: 4.12.16
       lru-cache:
         specifier: ^11.3.6

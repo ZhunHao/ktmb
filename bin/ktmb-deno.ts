@@ -8,8 +8,9 @@
  * Deployed via Deno Deploy's GitHub source integration (auto-builds on every
  * push to `main`; no GitHub Actions workflow involved).
  */
-// Keep this version in sync with the `hono` entry in package.json — Deno
-// resolves npm: specifiers independently of the pnpm lockfile.
+// Hono is pinned to an exact version in `package.json` (no caret) so this
+// `npm:` specifier — which Deno resolves independently of the pnpm lockfile —
+// cannot drift on a routine `pnpm update`. Bumping requires editing both.
 import { serveStatic } from "npm:hono@4.12.16/deno";
 
 // Imports resolve directly to TypeScript source under `src/` via Deno's

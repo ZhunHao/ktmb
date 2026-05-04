@@ -2,18 +2,8 @@ import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 import type { Result } from "../result.js";
 import { err, ok } from "../result.js";
 import { fetchWithRetry } from "../client/http.js";
+import { epochToIsoMyt } from "../time/myt.js";
 import type { VehiclePosition } from "../types.js";
-
-const epochToIsoMyt = (epochSeconds: number): string => {
-  const d = new Date(epochSeconds * 1000);
-  const mytMs = d.getTime() + 8 * 60 * 60 * 1000;
-  const m = new Date(mytMs);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    `${m.getUTCFullYear()}-${pad(m.getUTCMonth() + 1)}-${pad(m.getUTCDate())}` +
-    `T${pad(m.getUTCHours())}:${pad(m.getUTCMinutes())}:${pad(m.getUTCSeconds())}+08:00`
-  );
-};
 
 export const fetchVehiclePositions = async (
   url: string,

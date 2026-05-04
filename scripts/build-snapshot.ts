@@ -20,6 +20,7 @@ import { createKtmb } from "../src/core/index.js";
 import { err } from "../src/core/result.js";
 import { classifyRoute } from "../src/core/schedules/route-classifier.js";
 import type { Service } from "../src/core/schedules/route-classifier.js";
+import { addDaysMyt } from "../src/core/time/myt.js";
 import type { KomuterDeparture, Station, TrainSchedule, VehiclePosition } from "../src/core/types.js";
 
 const OUT_DIR = resolve(process.cwd(), "site/data");
@@ -61,12 +62,6 @@ type Meta = {
 const SHOWCASE_LIMIT = 25;
 
 const today = (): string => new Date().toISOString().slice(0, 10);
-
-const addDaysIso = (iso: string, days: number): string => {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-};
 
 // Project (lat, lon) onto the demo's 800x480 SVG. The viewBox roughly spans
 // peninsular Malaysia; calibrated against the station markers in the design
@@ -193,7 +188,7 @@ const main = async (): Promise<void> => {
   // station × station grid; only emit pairs that have at least one trip.
   const dates: string[] = [];
   for (let i = 0; i < FORWARD_DAYS; i++) {
-    const d = addDaysIso(date, i);
+    const d = addDaysMyt(date, i);
     if (!store.isOutsideCalendarWindow(d)) dates.push(d);
   }
   log("schedule dates within window:", dates.join(", ") || "(none)");
