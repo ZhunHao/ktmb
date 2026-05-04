@@ -18,9 +18,15 @@
   /** @type {Record<string, any[]>} */
   let KOMUTER_INDEX = {};
   /** @type {Array<{vehicleId:string,tripId?:string,routeId?:string,kind:string,
-   *                x:number,y:number,lat:number,lon:number,bearing?:number,
+   *                lat:number,lon:number,bearing?:number,
    *                speedKmh?:number,timestamp:string}>} */
   let VEHICLES = [];
+
+  // ---------- Leaflet map state ----------
+  /** @type {any|null} */
+  let LEAFLET_MAP = null;
+  /** @type {Map<string, any>} vehicleId → L.Marker */
+  const VEHICLE_MARKERS = new Map();
 
   const dataUrl = (file) => `./data/${file}`;
   async function fetchJson(file) {
@@ -445,7 +451,7 @@
         price.appendChild(el('span', 'from', 'fares'));
         price.appendChild(el('span', 'amount', 'see KTMB'));
         const seats = el('span', 'seats');
-        seats.textContent = 'Live booking endpoint not yet wired in v0.2';
+        seats.textContent = 'Live booking endpoint not yet wired in this demo';
         price.appendChild(seats);
       }
       card.appendChild(price);
@@ -553,27 +559,85 @@
   // ---- Realtime ----
   let selectedVehicleId = null;
 
-  function renderVehicles() {
-    const layer = $('#vehicle-layer');
-    if (!layer) return;
-    const existingIds = new Set();
-    for (const v of VEHICLES) {
-      existingIds.add(v.vehicleId);
-      let dot = layer.querySelector(`[data-vid="${cssEsc(v.vehicleId)}"]`);
-      if (!dot) {
-        dot = document.createElement('div');
-        dot.className = `vehicle ${v.kind || 'ets'}`;
-        dot.dataset.vid = v.vehicleId;
-        dot.addEventListener('click', () => selectVehicle(v.vehicleId));
-        layer.appendChild(dot);
-      }
-      dot.classList.toggle('selected', v.vehicleId === selectedVehicleId);
-      dot.style.left = `${(v.x / 800) * 100}%`;
-      dot.style.top = `${(v.y / 480) * 100}%`;
-    }
-    Array.from(layer.children).forEach((child) => {
-      if (!existingIds.has(child.dataset.vid)) child.remove();
+  // Centered on Peninsular Malaysia (KL ~3.13°N, 101.69°E). Bounds clamped so
+  // pan/zoom can't drift the user off the rail network.
+  function initLeafletMap() {
+    if (typeof L === 'undefined' || LEAFLET_MAP) return;
+    const node = $('#leaflet-map');
+    if (!node) return;
+
+    const map = L.map(node, {
+      center: [3.95, 102.1],
+      zoom: 7,
+      minZoom: 6,
+      maxZoom: 14,
+      zoomControl: false,
+      scrollWheelZoom: false,
+      attributionControl: true,
+      maxBounds: [
+        [0.5, 99.0],
+        [7.5, 105.5],
+      ],
+      maxBoundsViscosity: 1.0,
     });
+
+    L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      {
+        subdomains: 'abcd',
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19,
+      },
+    ).addTo(map);
+
+    // Scroll-wheel zoom only after the user clicks/focuses the map — avoids
+    // hijacking page scroll on the marketing surface.
+    map.on('focus', () => map.scrollWheelZoom.enable());
+    map.on('blur', () => map.scrollWheelZoom.disable());
+
+    LEAFLET_MAP = map;
+  }
+
+  function renderVehicles() {
+    if (!LEAFLET_MAP) return;
+    const present = new Set();
+    for (const v of VEHICLES) {
+      if (typeof v.lat !== 'number' || typeof v.lon !== 'number') continue;
+      present.add(v.vehicleId);
+      let marker = VEHICLE_MARKERS.get(v.vehicleId);
+      const kind = v.kind || 'ets';
+      if (!marker) {
+        const icon = L.divIcon({
+          className: 'vehicle-icon',
+          html: `<div class="vehicle ${kind}"></div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        });
+        marker = L.marker([v.lat, v.lon], { icon, keyboard: false, riseOnHover: true });
+        marker.on('click', () => selectVehicle(v.vehicleId));
+        marker.addTo(LEAFLET_MAP);
+        VEHICLE_MARKERS.set(v.vehicleId, marker);
+      } else {
+        marker.setLatLng([v.lat, v.lon]);
+      }
+      const root = marker.getElement();
+      if (root) {
+        const inner = root.querySelector('.vehicle');
+        if (inner) {
+          const selected = v.vehicleId === selectedVehicleId ? ' selected' : '';
+          inner.className = `vehicle ${kind}${selected}`;
+        }
+      }
+    }
+    for (const [id, marker] of VEHICLE_MARKERS.entries()) {
+      if (!present.has(id)) {
+        LEAFLET_MAP.removeLayer(marker);
+        VEHICLE_MARKERS.delete(id);
+      }
+    }
     if (selectedVehicleId) renderVehicleDetail();
   }
 
@@ -642,21 +706,6 @@
     dot.classList.toggle('paused', paused);
   }
 
-  // Linear lat/lon → 800x480 viewBox projection. Same coefficients as the
-  // build-snapshot script so live and snapshot dots line up.
-  function projectLatLon(lat, lon) {
-    const latTop = 6.7;
-    const latBottom = 1.45;
-    const lonLeft = 100.0;
-    const lonRight = 104.0;
-    const x = ((lon - lonLeft) / (lonRight - lonLeft)) * 800;
-    const y = ((latTop - lat) / (latTop - latBottom)) * 480;
-    return {
-      x: Math.max(20, Math.min(780, x)),
-      y: Math.max(20, Math.min(460, y)),
-    };
-  }
-
   function deriveKind(routeId) {
     if (!routeId) return 'ets';
     const id = String(routeId).toUpperCase();
@@ -674,10 +723,7 @@
       if (!res.ok) throw new Error(String(res.status));
       const body = await res.json();
       if (!body.ok || !Array.isArray(body.data)) return;
-      VEHICLES = body.data.map((v) => {
-        const { x, y } = projectLatLon(v.lat, v.lon);
-        return { ...v, kind: deriveKind(v.routeId), x, y };
-      });
+      VEHICLES = body.data.map((v) => ({ ...v, kind: deriveKind(v.routeId) }));
       setText('#vehicle-count', String(VEHICLES.length));
       renderVehicles();
       if (!liveMode) {
@@ -829,6 +875,7 @@
     }
 
     // Realtime — first paint from snapshot, then try live API.
+    initLeafletMap();
     renderVehicles();
     renderSnapshotPill();
     setText('#vehicle-count', String(VEHICLES.length));
