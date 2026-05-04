@@ -505,6 +505,10 @@
     border: 1px solid var(--hairline);
     border-radius: 18px; overflow: hidden;
     display: grid; grid-template-columns: 1fr 320px;
+    /* Contain Leaflet's internal z-index stack (panes go up to ~700,
+       controls and our overlay chips up to 1000) inside this tile so
+       they never punch through the sticky sub-nav (z-index: 49). */
+    isolation: isolate;
   }
   @media (max-width: 760px) { .map-card { grid-template-columns: 1fr; } }
   .map-card .map-area {
