@@ -12,11 +12,10 @@
  * CHANGELOG.md for the planned `feed_stale` error and KTMB fallback when a
  * requested date is past the calendar `endDate`.
  */
+import { DATA_GOV_MY_GTFS_STATIC_URL } from "../src/core/config.js";
 import { GtfsLoader } from "../src/core/gtfs/loader.js";
 import { classifyRoute } from "../src/core/schedules/route-classifier.js";
 import { gtfsTimeToIso } from "../src/core/time/gtfs-rollover.js";
-
-const FEED_URL = "https://api.data.gov.my/gtfs-static/ktmb";
 
 interface DepartureRow {
   trainNo: string;
@@ -34,7 +33,7 @@ const main = async (): Promise<void> => {
     process.exit(1);
   }
 
-  const loader = new GtfsLoader(FEED_URL);
+  const loader = new GtfsLoader(DATA_GOV_MY_GTFS_STATIC_URL);
   const result = await loader.load();
   if (!result.ok) {
     console.error("load failed:", result.error);

@@ -1,11 +1,10 @@
 /* eslint-disable no-console */
 import { fetchWithRetry } from "../src/core/client/http.js";
+import { DATA_GOV_MY_GTFS_STATIC_URL } from "../src/core/config.js";
 import { unzipSync, strFromU8 } from "fflate";
 
-const URL = "https://api.data.gov.my/gtfs-static/ktmb";
-
 const main = async (): Promise<void> => {
-  const r = await fetchWithRetry(URL);
+  const r = await fetchWithRetry(DATA_GOV_MY_GTFS_STATIC_URL);
   if (!r.ok) {
     console.error(r.error);
     process.exit(1);

@@ -1,8 +1,9 @@
+import {
+  DATA_GOV_MY_GTFS_REALTIME_URL,
+  DATA_GOV_MY_GTFS_STATIC_URL,
+} from "../src/core/config.js";
 import { buildMcpServer, runStdio, runHttp } from "../src/mcp/server.js";
 import { createKtmbRuntime } from "../src/runtime/bootstrap.js";
-
-const FEED_STATIC = "https://api.data.gov.my/gtfs-static/ktmb";
-const FEED_RT = "https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb";
 
 type CliArgs = {
   transport: "stdio" | "http";
@@ -25,11 +26,13 @@ const parseArgs = (argv: readonly string[]): CliArgs => {
 
 const main = async (): Promise<void> => {
   const args = parseArgs(process.argv.slice(2));
-  const refreshIntervalMs = Number(process.env.KTMB_REFRESH_MS ?? 6 * 60 * 60 * 1000);
+  const refreshOverride = process.env.KTMB_REFRESH_MS
+    ? Number(process.env.KTMB_REFRESH_MS)
+    : undefined;
   const rt = await createKtmbRuntime({
-    feedStaticUrl: FEED_STATIC,
-    feedRealtimeUrl: FEED_RT,
-    refreshIntervalMs,
+    feedStaticUrl: DATA_GOV_MY_GTFS_STATIC_URL,
+    feedRealtimeUrl: DATA_GOV_MY_GTFS_REALTIME_URL,
+    ...(refreshOverride !== undefined ? { refreshIntervalMs: refreshOverride } : {}),
   });
   const server = buildMcpServer(rt.ktmb);
 

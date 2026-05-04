@@ -10,6 +10,10 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import {
+  DATA_GOV_MY_GTFS_REALTIME_URL,
+  DATA_GOV_MY_GTFS_STATIC_URL,
+} from "../src/core/config.js";
 import { GtfsLoader } from "../src/core/gtfs/loader.js";
 import { fetchVehiclePositions } from "../src/core/gtfs/realtime.js";
 import { createKtmb } from "../src/core/index.js";
@@ -18,12 +22,10 @@ import { classifyRoute } from "../src/core/schedules/route-classifier.js";
 import type { Service } from "../src/core/schedules/route-classifier.js";
 import type { KomuterDeparture, Station, TrainSchedule, VehiclePosition } from "../src/core/types.js";
 
-const FEED_STATIC = "https://api.data.gov.my/gtfs-static/ktmb";
-const FEED_RT = "https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb";
 const OUT_DIR = resolve(process.cwd(), "site/data");
 const FORWARD_DAYS = 7;
 
-const LINE_COLORS: Record<string, string> = {
+const LINE_COLORS: Record<Service, string> = {
   ETS: "#0066cc",
   Komuter: "#34c759",
   Intercity: "#ff9500",
@@ -100,8 +102,8 @@ const log = (...args: unknown[]): void => {
 
 const main = async (): Promise<void> => {
   await mkdir(OUT_DIR, { recursive: true });
-  log("loading GTFS-Static from", FEED_STATIC);
-  const loader = new GtfsLoader(FEED_STATIC);
+  log("loading GTFS-Static from", DATA_GOV_MY_GTFS_STATIC_URL);
+  const loader = new GtfsLoader(DATA_GOV_MY_GTFS_STATIC_URL);
   const r = await loader.load();
   if (!r.ok) {
     throw new Error(`GTFS load failed: ${r.error.code} ${r.error.message}`);
@@ -116,13 +118,14 @@ const main = async (): Promise<void> => {
     JSON.stringify(store.calendarWindow),
   );
 
-  // Realtime fetcher returns err in the unrelated case of no vehicles. We
-  // surface the error rather than throwing, so a flaky upstream doesn't kill
-  // the whole snapshot.
+  // The snapshot intentionally does not bake live fares (they're per-train,
+  // per-date, and arrive via the demo's runtime calls to /v1/schedules). The
+  // fareGetter is a stub that returns `internal_error` to make any accidental
+  // call obvious — `upstream_error` would imply a real KITS failure.
   const ktmb = createKtmb({
     store,
-    fareGetter: async () => err("upstream_error", "fares not snapshotted"),
-    realtimeFetcher: () => fetchVehiclePositions(FEED_RT),
+    fareGetter: async () => err("internal_error", "fares not snapshotted"),
+    realtimeFetcher: () => fetchVehiclePositions(DATA_GOV_MY_GTFS_REALTIME_URL),
   });
 
   // ---- Stations (augmented with lat/lon from the GTFS stops table) ----
@@ -153,19 +156,17 @@ const main = async (): Promise<void> => {
   // ---- Komuter lines (enriched with station ordering and a swatch colour) ----
   const lineRes = ktmb.komuter.listLines();
   if (!lineRes.ok) throw new Error(`komuter listLines failed: ${lineRes.error.message}`);
-  const lines: EnrichedKomuterLine[] = lineRes.data.map((ln, i) => {
+  const lines: EnrichedKomuterLine[] = lineRes.data.map((ln) => {
     // First trip of the route exposes the canonical station sequence.
     const trips = store.tripsForRoute(ln.lineId);
     const exemplar = trips[0];
     const stationsOnLine = exemplar
       ? store.stopTimesForTrip(exemplar.tripId).map((s) => s.stopId)
       : [];
-    const palette = ["#0066cc", "#34c759", "#ff9500", "#af52de"];
-    const color = palette[i % palette.length] ?? "#0066cc";
     return {
       id: ln.lineId,
       name: ln.nameEn,
-      color,
+      color: LINE_COLORS.Komuter,
       stations: stationsOnLine,
     };
   });
@@ -237,12 +238,12 @@ const main = async (): Promise<void> => {
   try {
     const RT_ATTEMPTS = 3;
     const RT_DELAY_MS = 4_000;
-    let rt = await fetchVehiclePositions(FEED_RT);
+    let rt = await fetchVehiclePositions(DATA_GOV_MY_GTFS_REALTIME_URL);
     for (let attempt = 1; attempt < RT_ATTEMPTS; attempt++) {
       if (rt.ok && rt.data.length > 0) break;
       log(`realtime attempt ${attempt} returned ${rt.ok ? rt.data.length : "error"}; retrying in ${RT_DELAY_MS}ms`);
       await new Promise((r) => setTimeout(r, RT_DELAY_MS));
-      rt = await fetchVehiclePositions(FEED_RT);
+      rt = await fetchVehiclePositions(DATA_GOV_MY_GTFS_REALTIME_URL);
     }
     if (rt.ok) {
       const enriched: EnrichedVehicle[] = rt.data.map((v: VehiclePosition) => {
@@ -275,7 +276,7 @@ const main = async (): Promise<void> => {
   // ---- Meta ----
   const meta: Meta = {
     builtAt: new Date().toISOString(),
-    feedStaticUrl: FEED_STATIC,
+    feedStaticUrl: DATA_GOV_MY_GTFS_STATIC_URL,
     calendarWindow: store.calendarWindow,
     scheduleDates: dates,
     scheduleEntries: scheduleEntryCount,

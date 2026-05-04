@@ -16,20 +16,23 @@ import { serveStatic } from "npm:hono@4.12.16/deno";
 // sloppy-imports unstable feature (see deno.json). This avoids depending on
 // the tsup-bundled `dist/`, which strips `node:` prefixes and confuses Deno.
 import { buildApp } from "../src/api/server.js";
+import {
+  DATA_GOV_MY_GTFS_REALTIME_URL,
+  DATA_GOV_MY_GTFS_STATIC_URL,
+} from "../src/core/config.js";
 import { createKtmbRuntime } from "../src/runtime/bootstrap.js";
 
-const FEED_STATIC = "https://api.data.gov.my/gtfs-static/ktmb";
-const FEED_RT = "https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb";
-const REFRESH_MS = Number(Deno.env.get("KTMB_REFRESH_MS") ?? 6 * 60 * 60 * 1000);
+const refreshOverrideRaw = Deno.env.get("KTMB_REFRESH_MS");
+const refreshOverride = refreshOverrideRaw ? Number(refreshOverrideRaw) : undefined;
 
 const log = (...args: unknown[]): void => {
   console.log("[ktmb-deno]", ...args);
 };
 
 const rt = await createKtmbRuntime({
-  feedStaticUrl: FEED_STATIC,
-  feedRealtimeUrl: FEED_RT,
-  refreshIntervalMs: REFRESH_MS,
+  feedStaticUrl: DATA_GOV_MY_GTFS_STATIC_URL,
+  feedRealtimeUrl: DATA_GOV_MY_GTFS_REALTIME_URL,
+  ...(refreshOverride !== undefined ? { refreshIntervalMs: refreshOverride } : {}),
   logger: {
     info: (msg, err) => (err === undefined ? log(msg) : log(msg, err)),
     error: (msg, err) => (err === undefined ? log(msg) : log(msg, err)),
