@@ -566,12 +566,13 @@
     const node = $('#leaflet-map');
     if (!node) return;
 
-    // gestureHandling delegates the scroll-trap problem to a plugin that
-    // implements the Google-Maps pattern: ⌘/Ctrl + wheel to zoom on
-    // desktop, two-finger pan on touch. Plain wheel and one-finger swipe
-    // pass through to the page; the plugin shows a "Use ⌘ + scroll to
-    // zoom the map" overlay on the first attempt to scroll-zoom without
-    // the modifier. Loaded as a CDN script in index.html.
+    // gestureHandling adopts the Google-Maps interaction pattern as UX
+    // polish: ⌘/Ctrl + wheel to zoom on desktop, two-finger pan on touch,
+    // and a brief "Use ⌘ + scroll to zoom the map" overlay on the first
+    // bare-scroll attempt. Plugin is loaded as a CDN script in index.html.
+    // (Note: this is unrelated to the z-index leak that was actually
+    // making the map appear above the sticky sub-nav — that was fixed
+    // separately by `isolation: isolate` on .map-card.)
     const map = L.map(node, {
       center: [3.95, 102.1],
       zoom: 7,
