@@ -46,7 +46,7 @@ The server mounts a single `POST/GET /mcp` endpoint that speaks the MCP Streamab
 
 Environment variables: `PORT` and `HOST` provide defaults; CLI flags override.
 
-## Known limitations (v0.2)
+## Known limitations
 
 - **GTFS Realtime trip updates and service alerts** are not yet published by
   `data.gov.my`. Only vehicle positions are available.
@@ -66,34 +66,23 @@ For the full release notes and the roadmap, see [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Install
 
-> **Not yet published to npm.** v0.1.0 is source-only — install from the repo
-> until the first registry release. Tracked in [`CHANGELOG.md`](CHANGELOG.md#unreleased).
-
-```bash
-# from a clone of this repo
-npm install
-npm run build
-
-# run the bins directly
-node dist/bin/ktmb-mcp.js   # MCP stdio server
-node dist/bin/ktmb-api.js   # REST server on PORT (default 8787)
-
-# or expose `ktmb-mcp` / `ktmb-api` on your PATH
-npm link
-```
-
-To consume the library from another local project, run `npm link` here, then
-`npm link @zhun_hao/ktmb` in the consumer.
-
-Install from npm:
-
 ```bash
 npm i @zhun_hao/ktmb
+# one-shot via npx
 npx --package=@zhun_hao/ktmb ktmb-mcp
 npx --package=@zhun_hao/ktmb ktmb-api
 ```
 
-(After global install — `npm i -g @zhun_hao/ktmb` — the `ktmb-mcp` and `ktmb-api` binaries are on PATH directly.)
+After a global install (`npm i -g @zhun_hao/ktmb`), the `ktmb-mcp` and `ktmb-api` binaries are on PATH directly.
+
+To work from a clone instead:
+
+```bash
+pnpm install
+pnpm build
+node dist/bin/ktmb-mcp.js   # MCP stdio server
+node dist/bin/ktmb-api.js   # REST server on PORT (default 8787)
+```
 
 ## Library
 

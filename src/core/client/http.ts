@@ -1,3 +1,4 @@
+import { USER_AGENT } from "../config.js";
 import type { Result } from "../result.js";
 import { err, ok } from "../result.js";
 import { queueFor } from "./concurrency.js";
@@ -18,7 +19,6 @@ export type FetchOptions = {
 };
 
 const DEFAULT_RETRIES = [250, 750, 2000] as const;
-const DEFAULT_UA = "ktmb/0.1.0 (+https://github.com/zhunhao/ktmb)";
 
 const codeForStatus = (status: number): "not_found" | "rate_limited" | "upstream_error" => {
   if (status === 404) return "not_found";
@@ -52,7 +52,7 @@ export const fetchWithRetry = async (
 
   return queue.add(async () => {
     const headers = new Headers(options.headers);
-    if (!headers.has("user-agent")) headers.set("user-agent", options.userAgent ?? DEFAULT_UA);
+    if (!headers.has("user-agent")) headers.set("user-agent", options.userAgent ?? USER_AGENT);
 
     let lastStatus = 0;
     let lastError: unknown = undefined;

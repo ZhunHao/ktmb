@@ -10,8 +10,27 @@ import { RealtimeService } from "./realtime/service.js";
 import type { RealtimeFetcher } from "./realtime/service.js";
 import type { TrainClass, VehiclePosition } from "./types.js";
 
-export * from "./types.js";
-export * from "./result.js";
+export type {
+  Station,
+  Stop,
+  Fare,
+  TrainClass,
+  TrainSchedule,
+  KomuterDeparture,
+  CalendarWindow,
+  VehiclePosition,
+} from "./types.js";
+export {
+  StationSchema,
+  StopSchema,
+  FareSchema,
+  TrainClassSchema,
+  TrainScheduleSchema,
+  KomuterDepartureSchema,
+  VehiclePositionSchema,
+} from "./types.js";
+export type { ErrorCode, ResultError, Result } from "./result.js";
+export { ok, err, isOk, isErr } from "./result.js";
 export { GtfsStore } from "./gtfs/store.js";
 export { GtfsLoader } from "./gtfs/loader.js";
 export { parseStaticFeed } from "./gtfs/static-parser.js";

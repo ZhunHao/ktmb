@@ -1,3 +1,4 @@
+import { KITS_BASE_URL, USER_AGENT } from "../config.js";
 import type { Result } from "../result.js";
 import { err, ok } from "../result.js";
 import { CookieJar } from "./cookie-jar.js";
@@ -6,12 +7,10 @@ import { parseTripForm } from "./parse-trip-form.js";
 import { parseTripListing, type TripListingRow } from "./parse-trip-listing.js";
 import { parseLayout, type ParsedLayout } from "./parse-layout.js";
 
-const BASE = "https://online.ktmb.com.my";
-const UA = "ktmb/0.3 (+https://github.com/zhunhao/ktmb)";
-
 export type KitsClientOptions = {
   cookie?: string;        // pre-supplied Cookie header (auth mode)
   fetcher?: typeof fetch; // injection seam for tests
+  baseUrl?: string;       // override KITS origin for staging/testing
 };
 
 export type SearchTripsInput = {
@@ -36,14 +35,27 @@ const formatOnward = (iso: string): string => {
   return `${d} ${monthsShort[m! - 1]} ${y}`;
 };
 
+/**
+ * Single-session HTTP client for the public KTMB Online (KITS) booking site.
+ *
+ * **State warning.** Each instance carries cookie state, the parsed home page,
+ * and a `searchData` token across calls. `getLayout()` requires `searchTrips()`
+ * to have been invoked first on the same instance. **Do not share an instance
+ * across unrelated requests** — cookies and tokens conflict and you'll get
+ * stale results or upstream errors. Construct a fresh `KitsClient` per
+ * logical search → layout chain. The high-level helper
+ * `searchKitsByGtfsCodes()` (see `./search-by-gtfs.ts`) handles this for you.
+ */
 export class KitsClient {
   private readonly jar = new CookieJar();
   private readonly fetcher: typeof fetch;
+  private readonly baseUrl: string;
   private home: ParsedHomePage | undefined;
   private searchData: string | undefined;
 
   constructor(opts: KitsClientOptions = {}) {
     this.fetcher = opts.fetcher ?? fetch;
+    this.baseUrl = opts.baseUrl ?? KITS_BASE_URL;
     if (opts.cookie) this.jar.seedFromHeader(opts.cookie);
   }
 
@@ -51,12 +63,12 @@ export class KitsClient {
     path: string,
     init: RequestInit,
   ): Promise<{ status: number; body: string }> {
-    const res = await this.fetcher(`${BASE}${path}`, {
+    const res = await this.fetcher(`${this.baseUrl}${path}`, {
       ...init,
       headers: {
         ...(init.headers as Record<string, string> | undefined),
         Cookie: this.jar.toHeader(),
-        "User-Agent": UA,
+        "User-Agent": USER_AGENT,
       },
     });
     const sc = res.headers.getSetCookie?.() ?? [];
@@ -105,7 +117,7 @@ export class KitsClient {
         "Sec-Fetch-Mode": "navigate",
         "Sec-Fetch-User": "?1",
         "Upgrade-Insecure-Requests": "1",
-        Referer: `${BASE}/`,
+        Referer: `${this.baseUrl}/`,
       },
       body: new URLSearchParams({
         FromStationData: from.stationData,

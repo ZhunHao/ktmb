@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { Ktmb } from "../../core/index.js";
+import { ok } from "../../core/index.js";
+import { mcpJson } from "./_shared.js";
 
 export const SearchStationsInput = z.object({
   query: z.string().describe("Station name or code (fuzzy)").min(1),
@@ -9,11 +11,5 @@ export type SearchStationsArgs = z.infer<typeof SearchStationsInput>;
 
 export const searchStationsHandler =
   (ktmb: Ktmb) =>
-  async (args: SearchStationsArgs) => ({
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify({ ok: true, data: ktmb.stations.search(args.query, args.limit) }),
-      },
-    ],
-  });
+  async (args: SearchStationsArgs) =>
+    mcpJson(ok(ktmb.stations.search(args.query, args.limit)));

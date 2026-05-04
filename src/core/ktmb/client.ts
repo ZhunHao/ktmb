@@ -1,8 +1,7 @@
 import type { Result } from "../result.js";
 import { err, ok } from "../result.js";
 import type { TrainClass } from "../types.js";
-import { KitsClient } from "./kits-client.js";
-import { resolveKitsStationId } from "./station-map.js";
+import { searchKitsByGtfsCodes } from "./search-by-gtfs.js";
 
 export type GetAvailabilityInput = {
   from: string;       // GTFS stop_id (current contract)
@@ -28,37 +27,13 @@ export const getAvailability = async (
   input: GetAvailabilityInput,
   opts: GetAvailabilityOptions = {},
 ): Promise<Result<TrainClass[]>> => {
-  const client = opts.cookie
-    ? new KitsClient({ cookie: opts.cookie })
-    : new KitsClient();
-
-  const catalog = await client.getStationCatalog();
-  if (!catalog.ok) return catalog;
-
-  // GTFS callers pass stop_id in `from`/`to`. We feed it as both stopId and
-  // stopName so the resolver can fall through alias map → name match → id
-  // match without a separate name-lookup contract.
-  const fromKits = resolveKitsStationId(catalog.data, {
-    stopId: input.from,
-    stopName: input.from,
-  });
-  const toKits = resolveKitsStationId(catalog.data, {
-    stopId: input.to,
-    stopName: input.to,
-  });
-  if (!fromKits || !toKits) {
-    return err(
-      "not_found",
-      `no KITS station mapped for GTFS pair ${input.from}/${input.to}`,
-    );
-  }
-  const search = await client.searchTrips({
-    fromKitsId: fromKits,
-    toKitsId: toKits,
-    date: input.date,
-  });
+  const search = await searchKitsByGtfsCodes(
+    { from: input.from, to: input.to, date: input.date },
+    opts.cookie ? { cookie: opts.cookie } : {},
+  );
   if (!search.ok) return search;
-  const train = search.data.find((t) => t.trainNo === input.trainNo);
+  const { rows, client } = search.data;
+  const train = rows.find((t) => t.trainNo === input.trainNo);
   if (!train) return err("not_found", `train ${input.trainNo} not found in KITS listing`);
 
   if (!opts.cookie) {

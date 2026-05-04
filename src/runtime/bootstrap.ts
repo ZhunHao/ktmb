@@ -2,9 +2,7 @@ import { GtfsLoader } from "../core/gtfs/loader.js";
 import { fetchVehiclePositions } from "../core/gtfs/realtime.js";
 import type { GtfsStore } from "../core/gtfs/store.js";
 import { createKtmb, ktmbGetAvailability, type Ktmb } from "../core/index.js";
-import { KitsClient } from "../core/ktmb/kits-client.js";
-import { resolveKitsStationId } from "../core/ktmb/station-map.js";
-import { err } from "../core/result.js";
+import { searchKitsByGtfsCodes } from "../core/ktmb/search-by-gtfs.js";
 import type { ForwardFallback } from "../core/schedules/service.js";
 import { createLogger, type Logger } from "./logger.js";
 
@@ -54,30 +52,11 @@ export const createKtmbRuntime = async (opts: CreateRuntimeOptions): Promise<Run
     process.env.KTMB_FORWARD_FALLBACK === "1";
   const forwardFallback: ForwardFallback | undefined = forwardFallbackEnabled
     ? async (input) => {
-        const client = cookieFromEnv
-          ? new KitsClient({ cookie: cookieFromEnv })
-          : new KitsClient();
-        const catalog = await client.getStationCatalog();
-        if (!catalog.ok) return catalog;
-        const fromKits = resolveKitsStationId(catalog.data, {
-          stopId: input.from,
-          stopName: input.from,
-        });
-        const toKits = resolveKitsStationId(catalog.data, {
-          stopId: input.to,
-          stopName: input.to,
-        });
-        if (!fromKits || !toKits) {
-          return err(
-            "not_found",
-            `no KITS station mapped for GTFS pair ${input.from}/${input.to}`,
-          );
-        }
-        return client.searchTrips({
-          fromKitsId: fromKits,
-          toKitsId: toKits,
-          date: input.date,
-        });
+        const r = await searchKitsByGtfsCodes(
+          input,
+          cookieFromEnv ? { cookie: cookieFromEnv } : {},
+        );
+        return r.ok ? { ok: true, data: r.data.rows } : r;
       }
     : undefined;
   const ktmb = createKtmb({

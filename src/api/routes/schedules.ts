@@ -18,7 +18,7 @@ const AvailabilityQuery = z.object({
 
 export const buildSchedulesRouter = (ktmb: Ktmb): Hono => {
   const r = new Hono();
-  r.get("/", (c) => {
+  r.get("/", async (c) => {
     const parsed = ListQuery.safeParse({
       from: c.req.query("from"),
       to: c.req.query("to"),
@@ -27,7 +27,7 @@ export const buildSchedulesRouter = (ktmb: Ktmb): Hono => {
     if (!parsed.success) return errorResponse("invalid_input", "missing from/to/date");
     const date = parseDateMyt(parsed.data.date, new Date());
     if (!date.ok) return errorResponse(date.error.code, date.error.message);
-    const result = ktmb.schedules.listSchedules({
+    const result = await ktmb.schedules.listSchedulesAsync({
       from: parsed.data.from.toUpperCase(),
       to: parsed.data.to.toUpperCase(),
       date: date.data,
