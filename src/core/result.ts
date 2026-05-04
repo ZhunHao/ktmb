@@ -4,7 +4,8 @@ export type ErrorCode =
   | "rate_limited"
   | "upstream_error"
   | "parse_error"
-  | "outside_calendar_window";
+  | "outside_calendar_window"
+  | "internal_error";
 
 export type ResultError = {
   code: ErrorCode;

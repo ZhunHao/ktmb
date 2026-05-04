@@ -13,6 +13,8 @@ export const statusForError = (code: ErrorCode): number => {
     case "upstream_error":
     case "parse_error":
       return 502;
+    case "internal_error":
+      return 500;
   }
 };
 
