@@ -17,7 +17,7 @@ export const getFareAvailabilityHandler =
     const fromCode = resolveStation(ktmb, args.from);
     const toCode = resolveStation(ktmb, args.to);
     if (!fromCode || !toCode) return mcpError("not_found", "station not resolved");
-    const d = parseDateMyt(args.date, new Date());
+    const d = parseDateMyt(args.date);
     if (!d.ok) return mcpJson(d);
     return mcpJson(
       await ktmb.fares.get({

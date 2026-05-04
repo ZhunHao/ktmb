@@ -5,7 +5,7 @@ import { mytDate } from "./myt.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-export const parseDateMyt = (input: string, now: Date): Result<string> => {
+export const parseDateMyt = (input: string, now: Date = new Date()): Result<string> => {
   const trimmed = input.trim();
   if (ISO_DATE.test(trimmed)) {
     const [y, m, d] = trimmed.split("-").map(Number) as [number, number, number];

@@ -18,7 +18,7 @@ export const listSchedulesHandler =
     const from = resolveStation(ktmb, args.from);
     const to = resolveStation(ktmb, args.to);
     if (!from || !to) return mcpError("not_found", "could not resolve station");
-    const d = parseDateMyt(args.date, new Date());
+    const d = parseDateMyt(args.date);
     if (!d.ok) return mcpJson(d);
     return mcpJson(await ktmb.schedules.listSchedulesAsync({ from, to, date: d.data }));
   };

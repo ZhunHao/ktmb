@@ -19,7 +19,7 @@ export const buildKomuterRouter = (ktmb: Ktmb): Hono => {
       date: c.req.query("date"),
     });
     if (!parsed.success) return errorResponse("invalid_input", "missing station/date");
-    const date = parseDateMyt(parsed.data.date, new Date());
+    const date = parseDateMyt(parsed.data.date);
     if (!date.ok) return errorResponse(date.error.code, date.error.message);
     const r2 = ktmb.komuter.getTimetable({
       line,

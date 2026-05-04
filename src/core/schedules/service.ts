@@ -1,7 +1,7 @@
 import { gtfsTimeToIso } from "../time/gtfs-rollover.js";
 import type { GtfsStore } from "../gtfs/store.js";
 import type { Result } from "../result.js";
-import { err, ok } from "../result.js";
+import { ok } from "../result.js";
 import type { Stop, TrainSchedule } from "../types.js";
 import { classifyRoute } from "./route-classifier.js";
 import { kitsRowsToSchedules } from "./kits-fallback-adapter.js";
@@ -34,18 +34,29 @@ export class SchedulesService {
     this.forwardFallback = opts.forwardFallback;
   }
 
+  /**
+   * GTFS-only synchronous lookup. Returns `outside_calendar_window` for any
+   * date past the published feed; this entry point does not fall through to
+   * the KITS booking site even when `forwardFallback` is configured. Useful
+   * for offline/build-time consumers (e.g. the snapshot generator) that want
+   * a fast, deterministic, network-free lookup. For runtime callers that
+   * should benefit from the forward-dated KITS fallback, use
+   * {@link listSchedulesAsync}.
+   */
   listSchedules(input: ListSchedulesInput): Result<TrainSchedule[]> {
     const store = this.getStore();
     if (store.isOutsideCalendarWindow(input.date)) {
-      const w = store.calendarWindow!;
-      return err(
-        "outside_calendar_window",
-        `requested date ${input.date} is outside GTFS calendar window ${w.startDate}..${w.endDate}`,
-      );
+      return store.outsideWindowError(input.date);
     }
     return ok(this.fromGtfs(input, store));
   }
 
+  /**
+   * GTFS-first lookup that falls through to the KITS booking site for dates
+   * past the GTFS calendar window when a `forwardFallback` is configured on
+   * the service. Without a fallback, behaves identically to
+   * {@link listSchedules}. Prefer this entry point in API/MCP handlers.
+   */
   async listSchedulesAsync(
     input: ListSchedulesInput,
   ): Promise<Result<TrainSchedule[]>> {
@@ -54,11 +65,7 @@ export class SchedulesService {
       return ok(this.fromGtfs(input, store));
     }
     if (!this.forwardFallback) {
-      const w = store.calendarWindow!;
-      return err(
-        "outside_calendar_window",
-        `requested date ${input.date} is outside GTFS calendar window ${w.startDate}..${w.endDate}`,
-      );
+      return store.outsideWindowError(input.date);
     }
     const r = await this.forwardFallback(input);
     if (!r.ok) return r;

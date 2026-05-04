@@ -15,7 +15,7 @@ export const getKomuterTimetableHandler =
   async (args: GetKomuterTimetableArgs) => {
     const station = resolveStation(ktmb, args.station);
     if (!station) return mcpError("not_found", "station not resolved");
-    const d = parseDateMyt(args.date, new Date());
+    const d = parseDateMyt(args.date);
     if (!d.ok) return mcpJson(d);
     return mcpJson(ktmb.komuter.getTimetable({ line: args.line, station, date: d.data }));
   };

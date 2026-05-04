@@ -25,7 +25,7 @@ export const buildSchedulesRouter = (ktmb: Ktmb): Hono => {
       date: c.req.query("date"),
     });
     if (!parsed.success) return errorResponse("invalid_input", "missing from/to/date");
-    const date = parseDateMyt(parsed.data.date, new Date());
+    const date = parseDateMyt(parsed.data.date);
     if (!date.ok) return errorResponse(date.error.code, date.error.message);
     const result = await ktmb.schedules.listSchedulesAsync({
       from: parsed.data.from.toUpperCase(),
@@ -44,7 +44,7 @@ export const buildSchedulesRouter = (ktmb: Ktmb): Hono => {
       date: c.req.query("date"),
     });
     if (!parsed.success) return errorResponse("invalid_input", "missing from/to/date");
-    const date = parseDateMyt(parsed.data.date, new Date());
+    const date = parseDateMyt(parsed.data.date);
     if (!date.ok) return errorResponse(date.error.code, date.error.message);
     const r2 = await ktmb.fares.get({
       from: parsed.data.from.toUpperCase(),

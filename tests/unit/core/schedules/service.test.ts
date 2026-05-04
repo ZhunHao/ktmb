@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { parseStaticFeed } from "../../../../src/core/gtfs/static-parser.js";
 import { GtfsStore } from "../../../../src/core/gtfs/store.js";
-import { ok } from "../../../../src/core/result.js";
+import { err, ok } from "../../../../src/core/result.js";
 import { SchedulesService } from "../../../../src/core/schedules/service.js";
 import type { TripListingRow } from "../../../../src/core/ktmb/parse-trip-listing.js";
 import { buildMiniFeed } from "../gtfs/_make-fixture.js";
@@ -73,6 +73,11 @@ const fakeStore = (windowEnd: string): GtfsStore =>
   ({
     isOutsideCalendarWindow: (d: string) => d > windowEnd,
     calendarWindow: { startDate: "2026-01-01", endDate: windowEnd },
+    outsideWindowError: (d: string) =>
+      err(
+        "outside_calendar_window",
+        `requested date ${d} is outside GTFS calendar window 2026-01-01..${windowEnd}`,
+      ),
     tripsRunningOn: () => [],
     findRoute: () => undefined,
     stopTimesForTrip: () => [],

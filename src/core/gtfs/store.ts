@@ -1,3 +1,5 @@
+import { err } from "../result.js";
+import type { Result } from "../result.js";
 import type { CalendarWindow } from "../types.js";
 import type { Calendar, GtfsStop, Route, StaticFeed, StopTime, Trip } from "./types.js";
 
@@ -55,6 +57,15 @@ export class GtfsStore {
     const w = this.calendarWindow;
     if (!w) return false;
     return date < w.startDate || date > w.endDate;
+  }
+
+  outsideWindowError<T = never>(date: string): Result<T> {
+    const w = this.calendarWindow;
+    const window = w ? `${w.startDate}..${w.endDate}` : "(empty)";
+    return err(
+      "outside_calendar_window",
+      `requested date ${date} is outside GTFS calendar window ${window}`,
+    );
   }
 
   findStop(stopId: string): GtfsStop | undefined {

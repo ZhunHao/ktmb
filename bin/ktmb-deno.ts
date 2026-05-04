@@ -5,8 +5,8 @@
  * the shared `createKtmbRuntime` factory.
  *
  * Local dev: `deno task deploy:dev`
- * Deployed by `.github/workflows/deno-deploy.yml` (and Deno Deploy's GitHub
- * source integration).
+ * Deployed via Deno Deploy's GitHub source integration (auto-builds on every
+ * push to `main`; no GitHub Actions workflow involved).
  */
 // Keep this version in sync with the `hono` entry in package.json — Deno
 // resolves npm: specifiers independently of the pnpm lockfile.
