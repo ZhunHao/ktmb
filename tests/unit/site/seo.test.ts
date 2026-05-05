@@ -135,8 +135,8 @@ describe("index.html — Open Graph + Twitter", () => {
     expect(html).toMatch(
       /<meta\s+property="og:title"\s+content="ktmb — the rail data library for Malaysia"\s*\/?>/,
     );
-    expect(html).toContain(
-      'content="TypeScript library, REST API, and MCP server for Malaysia\'s KTMB rail data — stations, schedules, fares, Komuter, and live GTFS-Realtime vehicles."',
+    expect(html).toMatch(
+      /<meta\s+property="og:description"\s+content="TypeScript library, REST API, and MCP server for Malaysia's KTMB rail data — stations, schedules, fares, Komuter, and live GTFS-Realtime vehicles\."\s*\/?>/,
     );
   });
 
