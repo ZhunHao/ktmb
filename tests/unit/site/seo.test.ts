@@ -246,3 +246,31 @@ describe("index.html — connection hints", () => {
     expect(preconnectIdx).toBeLessThan(leafletIdx);
   });
 });
+
+describe("index.html — accessibility regression guards (no code change)", () => {
+  it("hero SVG keeps its aria-label", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toContain('aria-label="KTMB network — Peninsular Malaysia"');
+  });
+
+  it("station search input keeps its combobox semantics", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(/role="combobox"/);
+    expect(html).toMatch(/aria-controls="station-autocomplete"/);
+  });
+
+  it("leaflet map keeps its aria-label", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toContain('aria-label="Live vehicle map of Peninsular Malaysia"');
+  });
+
+  it("map refresh button keeps its aria-label", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toContain('aria-label="Refresh live vehicles"');
+  });
+
+  it("html element keeps lang=\"en\"", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(/<html\s+lang="en">/);
+  });
+});
