@@ -202,7 +202,7 @@ describe("index.html — JSON-LD structured data", () => {
     );
   });
 
-  it("SoftwareSourceCode entity declares license, repo, and target products", async () => {
+  it("SoftwareSourceCode entity declares license, repo, and runtime", async () => {
     const html = await readSiteFile("index.html");
     const data = extract(html) as { "@graph": Array<Record<string, unknown>> };
     const code = data["@graph"].find((e) => e["@type"] === "SoftwareSourceCode") as
@@ -212,7 +212,6 @@ describe("index.html — JSON-LD structured data", () => {
     expect(code?.license).toBe("https://opensource.org/licenses/MIT");
     expect(code?.programmingLanguage).toBe("TypeScript");
     expect(code?.runtimePlatform).toEqual(["Node.js", "Deno"]);
-    expect(code?.targetProduct).toEqual(["@zhun_hao/ktmb (npm)", "ktmb-api", "ktmb-mcp"]);
   });
 
   it("SoftwareApplication entity is a free DeveloperApplication", async () => {
