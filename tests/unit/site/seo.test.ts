@@ -68,3 +68,26 @@ describe("site/sitemap.xml", () => {
     );
   });
 });
+
+describe("site/favicon.svg", () => {
+  it("is a 32×32 SVG with the rail-line glyph", async () => {
+    const svg = await readSiteFile("favicon.svg");
+    expect(svg).toContain('viewBox="0 0 32 32"');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('stroke="#1d1d1f"');
+    // 2 rails + 4 sleeper ticks = 6 <line> elements
+    expect((svg.match(/<line\b/g) ?? []).length).toBe(6);
+  });
+
+  it("is registered on the Deno entry as /favicon.svg", async () => {
+    const src = await readDenoEntry();
+    expect(src).toMatch(
+      /app\.get\(\s*"\/favicon\.svg"\s*,\s*serveStatic\(\{\s*path:\s*"\.\/site\/favicon\.svg"\s*\}\)\s*\)/,
+    );
+  });
+
+  it("is linked from index.html via rel=icon", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(/<link\s+rel="icon"\s+type="image\/svg\+xml"\s+href="\/favicon\.svg"\s*\/?>/);
+  });
+});

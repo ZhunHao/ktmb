@@ -58,6 +58,7 @@ app.get("/ktmb-demo.js", serveStatic({ path: "./site/ktmb-demo.js" }));
 app.get("/llms.txt", serveStatic({ path: "./site/llms.txt" }));
 app.get("/robots.txt", serveStatic({ path: "./site/robots.txt" }));
 app.get("/sitemap.xml", serveStatic({ path: "./site/sitemap.xml" }));
+app.get("/favicon.svg", serveStatic({ path: "./site/favicon.svg" }));
 app.get("/data/*", serveStatic({ root: "./site" }));
 
 Deno.serve({ port: Number(Deno.env.get("PORT") ?? 8000) }, app.fetch);
