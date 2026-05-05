@@ -10,6 +10,30 @@
 
 **Spec:** [docs/superpowers/specs/2026-05-05-demo-page-seo-design.md](../specs/2026-05-05-demo-page-seo-design.md)
 
+> **Plan corrections discovered during execution.** Two specifics in this plan were
+> wrong and were corrected with follow-up commits during the original execution. If
+> you are re-running this plan or comparing it to the live site, treat the
+> corrections as authoritative:
+>
+> - **Task 7 — `targetProduct` removed.** The plan's JSON-LD example included
+>   `"targetProduct": ["@zhun_hao/ktmb (npm)", "ktmb-api", "ktmb-mcp"]` on
+>   `SoftwareSourceCode`. Per schema.org, `targetProduct` requires
+>   `SoftwareApplication` *objects*, not strings — `validator.schema.org` rejects the
+>   array-of-strings form. The shipped `SoftwareSourceCode` entity ends at
+>   `runtimePlatform`. The corresponding `expect(code?.targetProduct)` assertion was
+>   also dropped, and the test was renamed to "...declares license, repo, and
+>   runtime". Fix landed in commit `511ebe6`.
+> - **Task 8 — `dns-prefetch` to `api.data.gov.my` removed.** The browser-side JS
+>   only ever fetches same-origin paths (`/v1/realtime/vehicles`, `data/...`); the
+>   Deno backend proxies all `data.gov.my` requests server-side. The hint was
+>   therefore dead markup. The shipped `<head>` contains only the `preconnect` to
+>   `unpkg.com`. The corresponding test was removed, leaving 2 connection-hint
+>   tests instead of 3. Fix landed in commit `731d5fa`.
+>
+> Tasks 7 and 8 below still document what the plan *originally* said; the diff
+> between the plan and the shipped commits is the two fixes above. Do not
+> regenerate either property — they were removed deliberately.
+
 ---
 
 ## File Structure
