@@ -91,3 +91,26 @@ describe("site/favicon.svg", () => {
     expect(html).toMatch(/<link\s+rel="icon"\s+type="image\/svg\+xml"\s+href="\/favicon\.svg"\s*\/?>/);
   });
 });
+
+describe("index.html — base SEO meta", () => {
+  it("has a meta description with the project tagline", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(
+      /<meta\s+name="description"\s+content="TypeScript library, REST API, and MCP server for Malaysia's KTMB rail data — stations, schedules, fares, Komuter, and live GTFS-Realtime vehicles\."\s*\/?>/,
+    );
+  });
+
+  it("declares index,follow with max-image-preview:large", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(
+      /<meta\s+name="robots"\s+content="index,follow,max-image-preview:large"\s*\/?>/,
+    );
+  });
+
+  it("declares the canonical URL as the production demo origin", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(
+      /<link\s+rel="canonical"\s+href="https:\/\/ktmb-demo\.zhunhao\.deno\.net\/"\s*\/?>/,
+    );
+  });
+});
