@@ -228,3 +228,28 @@ describe("index.html — JSON-LD structured data", () => {
     expect(offer.priceCurrency).toBe("USD");
   });
 });
+
+describe("index.html — connection hints", () => {
+  it("declares preconnect to unpkg.com with crossorigin", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(
+      /<link\s+rel="preconnect"\s+href="https:\/\/unpkg\.com"\s+crossorigin\s*\/?>/,
+    );
+  });
+
+  it("declares dns-prefetch to api.data.gov.my", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(
+      /<link\s+rel="dns-prefetch"\s+href="https:\/\/api\.data\.gov\.my"\s*\/?>/,
+    );
+  });
+
+  it("preconnect is declared before the Leaflet stylesheet so it can warm the connection", async () => {
+    const html = await readSiteFile("index.html");
+    const preconnectIdx = html.search(/<link\s+rel="preconnect"\s+href="https:\/\/unpkg\.com"/);
+    const leafletIdx = html.search(/<link\s+rel="stylesheet"\s+href="https:\/\/unpkg\.com\/leaflet@/);
+    expect(preconnectIdx).toBeGreaterThan(-1);
+    expect(leafletIdx).toBeGreaterThan(-1);
+    expect(preconnectIdx).toBeLessThan(leafletIdx);
+  });
+});
