@@ -114,3 +114,51 @@ describe("index.html — base SEO meta", () => {
     );
   });
 });
+
+describe("index.html — Open Graph + Twitter", () => {
+  it("declares the website Open Graph type", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(/<meta\s+property="og:type"\s+content="website"\s*\/?>/);
+  });
+
+  it("declares og:site_name, og:locale, og:url", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(/<meta\s+property="og:site_name"\s+content="ktmb"\s*\/?>/);
+    expect(html).toMatch(/<meta\s+property="og:locale"\s+content="en_US"\s*\/?>/);
+    expect(html).toMatch(
+      /<meta\s+property="og:url"\s+content="https:\/\/ktmb-demo\.zhunhao\.deno\.net\/"\s*\/?>/,
+    );
+  });
+
+  it("og:title and og:description match the spec strings", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(
+      /<meta\s+property="og:title"\s+content="ktmb — the rail data library for Malaysia"\s*\/?>/,
+    );
+    expect(html).toContain(
+      'content="TypeScript library, REST API, and MCP server for Malaysia\'s KTMB rail data — stations, schedules, fares, Komuter, and live GTFS-Realtime vehicles."',
+    );
+  });
+
+  it("declares twitter:card=summary (text-only, no image)", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(/<meta\s+name="twitter:card"\s+content="summary"\s*\/?>/);
+    expect(html).not.toMatch(/twitter:card"\s+content="summary_large_image"/);
+  });
+
+  it("declares twitter:title and twitter:description", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).toMatch(
+      /<meta\s+name="twitter:title"\s+content="ktmb — the rail data library for Malaysia"\s*\/?>/,
+    );
+    expect(html).toMatch(
+      /<meta\s+name="twitter:description"\s+content="TypeScript library, REST API, and MCP server for Malaysia's KTMB rail data\."\s*\/?>/,
+    );
+  });
+
+  it("does NOT declare any og:image (intentional)", async () => {
+    const html = await readSiteFile("index.html");
+    expect(html).not.toMatch(/property="og:image"/);
+    expect(html).not.toMatch(/name="twitter:image"/);
+  });
+});
