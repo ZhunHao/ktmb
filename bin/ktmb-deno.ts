@@ -55,6 +55,7 @@ const app = buildApp(rt.ktmb);
 // actually exist under ./site.
 app.get("/", serveStatic({ path: "./site/index.html" }));
 app.get("/ktmb-demo.js", serveStatic({ path: "./site/ktmb-demo.js" }));
+app.get("/llms.txt", serveStatic({ path: "./site/llms.txt" }));
 app.get("/data/*", serveStatic({ root: "./site" }));
 
 Deno.serve({ port: Number(Deno.env.get("PORT") ?? 8000) }, app.fetch);

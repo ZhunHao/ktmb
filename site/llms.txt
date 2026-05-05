@@ -1,0 +1,63 @@
+# ktmb
+
+> Read-only TypeScript library, REST API, and MCP server for Malaysian
+> railway (KTMB) data — stations, schedules, fares, Komuter timetables,
+> and live GTFS-Realtime vehicle positions.
+
+ktmb is unofficial, MIT-licensed, and powered by the data.gov.my GTFS
+feeds plus polite scraping of the public KTMB booking site for fares and
+seat availability. The same core ships in three forms: a typed library
+(`@zhun_hao/ktmb`), a Hono-based REST server (`ktmb-api`), and a stdio
+MCP server (`ktmb-mcp`). For agents, the MCP server is the canonical
+interface; the REST API is the next-best option when an MCP client is
+not available.
+
+All REST and library responses use a single discriminated envelope:
+`{ "ok": true, "data": ... }` on success, `{ "ok": false, "error": { "code", "message" } }`
+on failure. `outside_calendar_window` maps to HTTP 422.
+
+## Docs
+
+- [README (Markdown)](https://raw.githubusercontent.com/ZhunHao/ktmb/main/README.md): Full library, REST, and MCP setup docs — read this first
+- [GitHub repository](https://github.com/ZhunHao/ktmb): Source, issues, changelog
+- [npm package](https://www.npmjs.com/package/@zhun_hao/ktmb): `@zhun_hao/ktmb`
+- [Live demo](https://ktmb-demo.zhunhao.deno.net/): One-page HTML demo (this site)
+
+## Live REST API
+
+Base URL: `https://ktmb-demo.zhunhao.deno.net`
+
+- [GET /healthz](https://ktmb-demo.zhunhao.deno.net/healthz): Liveness probe
+- [GET /v1/stations?q=…](https://ktmb-demo.zhunhao.deno.net/v1/stations?q=KL): Fuzzy station search across English and Bahasa Melayu names
+- [GET /v1/stations/:id](https://ktmb-demo.zhunhao.deno.net/v1/stations/KUL): Single station lookup by code
+- [GET /v1/schedules?from&to&date](https://ktmb-demo.zhunhao.deno.net/v1/schedules?from=KUL&to=BTW&date=2026-05-06): ETS, Intercity, and Shuttle Tebrau departures for a date
+- [GET /v1/schedules/:trainNo/availability](https://ktmb-demo.zhunhao.deno.net/v1/schedules/EG9421/availability): Fare classes and seats left (live, scraped)
+- [GET /v1/komuter/lines](https://ktmb-demo.zhunhao.deno.net/v1/komuter/lines): All Komuter line ids and their stations
+- [GET /v1/komuter/lines/:line/timetable](https://ktmb-demo.zhunhao.deno.net/v1/komuter/lines/POR/timetable?station=KAJ&date=2026-05-06): Calendar-aware Komuter departures for a station
+- [GET /v1/realtime/vehicles](https://ktmb-demo.zhunhao.deno.net/v1/realtime/vehicles): Live GTFS-RT vehicle positions, optionally filtered by route
+
+## MCP server
+
+Run via npx (no install required):
+
+    npx --package=@zhun_hao/ktmb ktmb-mcp
+
+Claude Desktop config:
+
+    {
+      "mcpServers": {
+        "ktmb": {
+          "command": "npx",
+          "args": ["--package=@zhun_hao/ktmb", "ktmb-mcp"]
+        }
+      }
+    }
+
+Tools exposed: `search_stations`, `list_schedules`, `get_fare_availability`,
+`list_komuter_lines`, `get_komuter_timetable`, `get_vehicle_positions`.
+
+## Upstream data
+
+- [data.gov.my GTFS Static](https://api.data.gov.my/gtfs-static/ktmb): Schedule, station, and calendar data (refreshed every 6 h on the demo)
+- [data.gov.my GTFS Realtime](https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb): Live vehicle positions (polled every 6 s by the demo's realtime tile)
+- [KTMB booking site](https://online.ktmb.com.my): Source of fare and seat-availability data (scraped with conservative caching and an honest User-Agent)
