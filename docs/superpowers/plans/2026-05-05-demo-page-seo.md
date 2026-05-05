@@ -821,13 +821,82 @@ Open the live URL in Chrome, DevTools → Lighthouse → "SEO" + "Accessibility"
 
 Expected: SEO ≥ 95; Accessibility unchanged from the pre-deploy baseline.
 
-- [ ] **Step 6 (optional): Submit to search consoles**
+Sitemap submission is its own task — see Task 11 below.
 
-Verify ownership of `ktmb-demo.zhunhao.deno.net` in:
-- Google Search Console — submit the sitemap.
-- Bing Webmaster Tools — submit the sitemap.
+---
 
-Expected: each shows "1 sitemap, 2 URLs, 0 errors". Indexing latency is days–weeks; not a launch gate.
+## Task 11: Submit sitemap to Google Search Console (manual)
+
+**Files:** none
+
+This task runs **after** the SEO plan is merged and Deno Deploy has shipped
+the build that includes `/sitemap.xml` (Task 3) and the canonical / JSON-LD
+meta (Tasks 5–7). Property verification is already done out-of-band via
+the `google-site-verification` meta tag in `site/index.html` (commit
+`b9138ee` on `main`); this task only handles the sitemap submission and
+post-submission checks.
+
+- [ ] **Step 1: Confirm verification is still active**
+
+Open `https://search.google.com/search-console` → property
+`https://ktmb-demo.zhunhao.deno.net/`. The "Verified" badge should be
+present. If it isn't, the verification meta tag in `site/index.html` is
+the source of truth — re-verify rather than removing the tag.
+
+- [ ] **Step 2: Confirm `/sitemap.xml` is publicly reachable**
+
+```bash
+curl -sI https://ktmb-demo.zhunhao.deno.net/sitemap.xml | head -3
+curl -s  https://ktmb-demo.zhunhao.deno.net/sitemap.xml | grep -c '<loc>'
+```
+
+Expected: `HTTP/2 200`, `content-type: application/xml`, and `2` for the
+loc count. If any of these fail, **stop**: Task 3 either didn't ship or
+the deploy is in a bad state. Don't submit a sitemap that 404s — Google
+remembers the failure.
+
+- [ ] **Step 3: Submit the sitemap**
+
+In Search Console: left nav → **Sitemaps** → "Add a new sitemap" → enter
+`sitemap.xml` (just the path; the form prefixes the property origin) →
+**Submit**.
+
+Expected within 1–2 minutes: status "Success", 2 discovered URLs, 0
+couldn't fetch.
+
+- [ ] **Step 4: Inspect the canonical URL**
+
+In Search Console: top search bar → paste
+`https://ktmb-demo.zhunhao.deno.net/` → **URL Inspection** → "Test live URL".
+
+Expected: "User-declared canonical" and "Google-selected canonical" both
+equal `https://ktmb-demo.zhunhao.deno.net/`. If they diverge, the
+canonical from Task 5 isn't being honoured — usually a stylesheet or HTTP
+redirect issue; investigate before relying on the rest of the SEO work.
+
+- [ ] **Step 5 (optional): Mirror in Bing Webmaster Tools**
+
+Visit `https://www.bing.com/webmasters` → **Add property** → choose
+"Import from Google Search Console" (smoothest path; reuses the GSC
+verification automatically). Under the imported property →
+**Sitemaps** → submit
+`https://ktmb-demo.zhunhao.deno.net/sitemap.xml`.
+
+Expected: 2 URLs discovered. Bing also feeds DuckDuckGo and ChatGPT's
+`bing` tool — useful even though Bing's organic share is small.
+
+- [ ] **Step 6: Schedule a 7-day check-in**
+
+No code, no commit. Set a reminder to re-open Search Console in 7 days
+and check **Pages → Indexed**. Initial index events for a freshly
+verified property typically land within 3–10 days; 30+ days with zero
+indexed pages indicates a real problem (most often a robots/canonical
+mistake or a thin-content flag).
+
+This task ends without a commit — verification + sitemap submission are
+purely Search Console state, not code. The verification meta tag and the
+sitemap file are the only persistent artefacts and they were committed
+in `b9138ee` and Task 3 respectively.
 
 ---
 
@@ -838,4 +907,4 @@ Expected: each shows "1 sitemap, 2 URLs, 0 errors". Indexing latency is days–w
 - Async Leaflet CSS, deferred script loading, inlined critical CSS
 - HN Show post, dev.to write-up, awesome-mcp / awesome-malaysia submissions
 - `llms-full.txt`, FAQ-formatted snippets, schema.org `featureList` enrichment
-- Search Console / Bing Webmaster property verification (requires the user's account)
+- Bing Webmaster Tools property verification beyond the GSC import path (Task 11 step 5 is the cheapest mirror; deeper Bing-specific configuration is deferred)
