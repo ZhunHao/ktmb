@@ -162,3 +162,70 @@ describe("index.html — Open Graph + Twitter", () => {
     expect(html).not.toMatch(/name="twitter:image"/);
   });
 });
+
+describe("index.html — JSON-LD structured data", () => {
+  const extract = (html: string): unknown => {
+    const m = html.match(
+      /<script type="application\/ld\+json">([\s\S]*?)<\/script>/,
+    );
+    if (!m) throw new Error("no JSON-LD <script> block");
+    return JSON.parse(m[1] as string);
+  };
+
+  it("contains exactly one JSON-LD block that parses cleanly", async () => {
+    const html = await readSiteFile("index.html");
+    const matches = html.match(/<script type="application\/ld\+json">/g) ?? [];
+    expect(matches.length).toBe(1);
+    expect(() => extract(html)).not.toThrow();
+  });
+
+  it("uses schema.org @context and a @graph of three entities", async () => {
+    const html = await readSiteFile("index.html");
+    const data = extract(html) as { "@context": string; "@graph": Array<{ "@type": string }> };
+    expect(data["@context"]).toBe("https://schema.org");
+    expect(Array.isArray(data["@graph"])).toBe(true);
+    expect(data["@graph"]).toHaveLength(3);
+    const types = data["@graph"].map((e) => e["@type"]).sort();
+    expect(types).toEqual(["SoftwareApplication", "SoftwareSourceCode", "WebSite"]);
+  });
+
+  it("WebSite entity points at the canonical URL with publisher reference", async () => {
+    const html = await readSiteFile("index.html");
+    const data = extract(html) as { "@graph": Array<Record<string, unknown>> };
+    const website = data["@graph"].find((e) => e["@type"] === "WebSite") as
+      | Record<string, unknown>
+      | undefined;
+    expect(website?.url).toBe("https://ktmb-demo.zhunhao.deno.net/");
+    expect(website?.inLanguage).toBe("en");
+    expect((website?.publisher as { "@id": string } | undefined)?.["@id"]).toBe(
+      "https://ktmb-demo.zhunhao.deno.net/#software",
+    );
+  });
+
+  it("SoftwareSourceCode entity declares license, repo, and target products", async () => {
+    const html = await readSiteFile("index.html");
+    const data = extract(html) as { "@graph": Array<Record<string, unknown>> };
+    const code = data["@graph"].find((e) => e["@type"] === "SoftwareSourceCode") as
+      | Record<string, unknown>
+      | undefined;
+    expect(code?.codeRepository).toBe("https://github.com/ZhunHao/ktmb");
+    expect(code?.license).toBe("https://opensource.org/licenses/MIT");
+    expect(code?.programmingLanguage).toBe("TypeScript");
+    expect(code?.runtimePlatform).toEqual(["Node.js", "Deno"]);
+    expect(code?.targetProduct).toEqual(["@zhun_hao/ktmb (npm)", "ktmb-api", "ktmb-mcp"]);
+  });
+
+  it("SoftwareApplication entity is a free DeveloperApplication", async () => {
+    const html = await readSiteFile("index.html");
+    const data = extract(html) as { "@graph": Array<Record<string, unknown>> };
+    const app = data["@graph"].find((e) => e["@type"] === "SoftwareApplication") as
+      | Record<string, unknown>
+      | undefined;
+    expect(app?.applicationCategory).toBe("DeveloperApplication");
+    expect(app?.operatingSystem).toBe("Cross-platform");
+    expect(app?.url).toBe("https://ktmb-demo.zhunhao.deno.net/");
+    const offer = app?.offers as { "@type": string; price: string; priceCurrency: string };
+    expect(offer.price).toBe("0");
+    expect(offer.priceCurrency).toBe("USD");
+  });
+});
