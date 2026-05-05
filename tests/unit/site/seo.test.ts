@@ -15,3 +15,26 @@ describe("site SEO — scaffolding sanity check", () => {
     expect(html).toContain("<!doctype html>");
   });
 });
+
+describe("site/robots.txt", () => {
+  it("allows / and /llms.txt and disallows /v1/ and /healthz", async () => {
+    const text = await readSiteFile("robots.txt");
+    expect(text).toMatch(/^User-agent: \*/m);
+    expect(text).toMatch(/^Allow: \/$/m);
+    expect(text).toMatch(/^Allow: \/llms\.txt$/m);
+    expect(text).toMatch(/^Disallow: \/v1\/$/m);
+    expect(text).toMatch(/^Disallow: \/healthz$/m);
+  });
+
+  it("points to the canonical sitemap URL", async () => {
+    const text = await readSiteFile("robots.txt");
+    expect(text).toContain("Sitemap: https://ktmb-demo.zhunhao.deno.net/sitemap.xml");
+  });
+
+  it("is registered on the Deno entry as /robots.txt", async () => {
+    const src = await readDenoEntry();
+    expect(src).toMatch(
+      /app\.get\(\s*"\/robots\.txt"\s*,\s*serveStatic\(\{\s*path:\s*"\.\/site\/robots\.txt"\s*\}\)\s*\)/,
+    );
+  });
+});

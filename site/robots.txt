@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /llms.txt
+Disallow: /v1/
+Disallow: /healthz
+
+Sitemap: https://ktmb-demo.zhunhao.deno.net/sitemap.xml
