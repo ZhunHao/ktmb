@@ -13,6 +13,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `upstream_error` is reserved for genuine upstream failures (KITS,
   GTFS feed). Clients that branch on the error code or status will see
   500 in places that previously returned 502.
+- **Demo realtime polling pauses when the tab is hidden** and resumes (with an immediate refresh) on `visibilitychange`. The live indicator dot turns amber while paused. Avoids burning quota on background tabs.
+- **Manual refresh button** (`↻`) on the realtime tile, revealed once the live API is confirmed reachable. Clicks are guarded against overlapping fetches.
 
 ### Refactored
 

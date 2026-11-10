@@ -152,7 +152,9 @@ Deploy²** alongside a live REST API at `/v1/*`. The Deno entry
 `ktmb-api`, then mounts `serveStatic` for the demo on the same origin.
 The demo loads pre-computed JSON snapshots from `/data/*.json` for
 instant first paint, then polls `/v1/realtime/vehicles` every 6 s for
-actually-live vehicle positions.
+actually-live vehicle positions. Polling pauses when the tab is
+backgrounded (live dot turns amber) and resumes on focus; a manual
+refresh button (`↻`) appears once the live API is confirmed reachable.
 
 The deploy pipeline:
 

@@ -468,6 +468,9 @@
     border-left: 6px solid var(--ink-muted-48);
   }
   .schedule-card .price { text-align: right; }
+  .schedule-card .price > .from,
+  .schedule-card .price > .amount,
+  .schedule-card .price > .seats { display: block; }
   .schedule-card .price .from { font: 400 12px/1 var(--text); color: var(--ink-muted-48); margin-bottom: 4px; }
   .schedule-card .price .amount {
     font: 600 24px/1.1 var(--display); letter-spacing: -0.2px;
@@ -1118,7 +1121,7 @@
   <div class="tile-inner">
     <p class="eyebrow">Realtime · GTFS-RT</p>
     <h2 class="display-lg">Where every train is, right now.</h2>
-    <p class="lead">Live vehicle positions polled from data.gov.my's GTFS-Realtime feed — typed, validated, and re-emitted with consistent ISO-8601 +08:00 timestamps.</p>
+    <p class="lead">Live vehicle positions polled from data.gov.my's GTFS-Realtime feed — typed, validated, and re-emitted with consistent ISO-8601 +08:00 timestamps. The map below polls <code>/v1/realtime/vehicles</code> every 6 s, pauses when this tab is backgrounded (dot turns amber), and exposes a manual refresh once the live API is reachable.</p>
 
     <div class="map-card" style="margin-top: 40px">
       <div class="map-area">

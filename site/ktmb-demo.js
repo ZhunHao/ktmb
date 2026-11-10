@@ -706,6 +706,7 @@
     const dot = document.querySelector('.map-counter .live-dot');
     if (!dot) return;
     dot.classList.toggle('paused', paused);
+    dot.title = paused ? 'Paused — tab hidden' : 'Live · polling every 6 s';
   }
 
   function deriveKind(routeId) {
